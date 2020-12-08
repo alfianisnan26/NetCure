@@ -2,58 +2,88 @@ import 'dart:ui';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
+import 'package:re_netcure/hospitalmap.dart' as maps;
 import 'newsapi.dart';
 import 'setting.dart';
-import 'dialogboxes.dart';
+import 'dialogboxes.dart' as dialogBox;
 
 BuildContext currentContext;
 
-class SlideBar {
-  Widget value, blurr;
+class CardItem {
+  Function onTap;
+  var color;
+  Widget smallWidget;
+  Widget bigWidget;
+  CardItem(this.onTap, this.color, this.smallWidget, this.bigWidget);
+}
 
-  List<Widget> generatedRoutines, generatedEmergency;
+class CardClass {
+  List<Widget> cardBig, cardSmall;
+  List<CardItem> myCards;
+  bool canBig = false;
+  CardClass(this.myCards, this.canBig) {
+    if (myCards != null) renderCards();
+  }
 
-  List<Widget> generateCards() {
-    return List.generate(50, (index) {
-      if (index == 0) {
-        return Hero(
-            tag: 'ROUTINE_$index',
-            child: Container(
-                child: GestureDetector(
-                    onTap: () => ackAlert(currentContext, "Add Routines",
-                        "Feature is Under Develope"),
-                    child: Card(
-                        shape: RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.all(Radius.circular(10))),
-                        color: Colors.green,
-                        child: Icon(
-                          Icons.add,
-                          color: Colors.white,
-                          size: 30,
-                        )))));
-      }
-      return Hero(
-          tag: 'ROUTINE_$index',
-          child: Container(
-              child: Card(
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.all(Radius.circular(10))),
-            color: Colors.amber,
+  void dumpGenerate(bool canBig, int length, Function func, var color) {
+    this.canBig = canBig;
+    this.myCards = List.generate(length, (index) {
+      return CardItem(
+          func,
+          color,
+          Center(child: Text('${index + 1}', style: TextStyle(fontSize: 20))),
+          Center(
+              child: Text(
+            '${index + 1}',
+            style: TextStyle(fontSize: 30),
           )));
+    });
+    renderCards();
+  }
+
+  void renderCards() {
+    cardSmall = List.generate(myCards.length, (index) {
+      return Container(
+          child: GestureDetector(
+              onTap: myCards[index].onTap,
+              child: Card(
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(10))),
+                color: myCards[index].color,
+                child: myCards[index].smallWidget,
+              )));
+    });
+    if (!canBig) return;
+    cardBig = List.generate(myCards.length, (index) {
+      return Container(
+          child: GestureDetector(
+              onTap: myCards[index].onTap,
+              child: Card(
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(10))),
+                color: myCards[index].color,
+                child: myCards[index].bigWidget,
+              )));
     });
   }
 
-  Widget _cards(Axis myAxis, int crossAxis, double size, List<Widget> cards) {
+  Widget cardsGrid(bool isbig, Axis myAxis, int crossAxis, double size) {
     return Container(
       height: size,
       child: GridView.count(
           scrollDirection: myAxis,
           padding: EdgeInsets.all(5),
           crossAxisCount: crossAxis,
-          children: generatedRoutines),
+          children: (isbig) ? cardBig : cardSmall),
     );
   }
+}
+
+class SlideBar {
+  Widget value, blurr;
+
+  CardClass cardRoutines = CardClass(null, true),
+      cardEmergency = CardClass(null, false);
 
   Widget _blurLayer(bool blurVisible, double blurVal) {
     return Visibility(
@@ -109,7 +139,8 @@ class SlideBar {
                         Opacity(
                             opacity: stack,
                             child: Stack(children: [
-                              _cards(
+                              cardRoutines.cardsGrid(
+                                  state,
                                   (state) ? Axis.vertical : Axis.horizontal,
                                   (state) ? setting.drawerRowGet() : 1,
                                   (state)
@@ -117,29 +148,31 @@ class SlideBar {
                                       : (setting.screenSize.height *
                                               setting
                                                   .ratioDrawerMinHeightGet() -
-                                          40),
-                                  generatedRoutines)
+                                          40))
                             ])),
                         Container(
-                          child: Center(
                             child: Column(
-                              children: [
-                                _cards(
-                                    Axis.horizontal,
-                                    1,
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            cardEmergency.cardsGrid(
+                              false,
+                              Axis.horizontal,
+                              1,
+                              setting.screenSize.height *
+                                      setting.ratioDrawerMinHeightGet() -
+                                  40,
+                            ),
+                            Container(
+                                height: (setting.screenSize.height *
+                                            setting.ratioDrawerMaxHeightGet() -
+                                        40) -
                                     (setting.screenSize.height *
                                             setting.ratioDrawerMinHeightGet() -
-                                        40),
-                                    generatedEmergency),
-                                Container(
-                                  color: Colors.red,
-                                  height: 100,
-                                  width: setting.screenSize.width,
-                                )
-                              ],
-                            ),
-                          ),
-                        ),
+                                        40) -
+                                    0.5,
+                                child: maps.MapNew()),
+                          ],
+                        )),
                         Container(
                           child: Center(
                             child: Text('Display Tab 3',
@@ -152,8 +185,16 @@ class SlideBar {
   }
 
   SlideBar() {
-    generatedRoutines = generateCards();
-    generatedEmergency = generateCards();
+    cardRoutines.dumpGenerate(
+        true,
+        25,
+        () => dialogBox.ackAlert(currentContext, 'Trial', 'Routines'),
+        Colors.green);
+    cardEmergency.dumpGenerate(
+        false,
+        10,
+        () => dialogBox.ackAlert(currentContext, 'Trial', 'Emergency'),
+        Colors.red);
     this.close();
   }
 
