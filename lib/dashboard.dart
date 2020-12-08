@@ -2,7 +2,7 @@ import 'dart:ui';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
-//import 'package:re_netcure/hospitalmap.dart' as maps;
+import 'package:re_netcure/hospitalmap.dart' as maps;
 //import 'maps.dart' as maps;
 import 'newsapi.dart';
 import 'setting.dart';
@@ -80,13 +80,24 @@ class CardClass {
   }
 }
 
-class SlideBar {
-  Widget value, blurr;
-  double emergencyCardspos = 0;
+class GenerateTabBar extends StatefulWidget {
+  final bool state;
+  final double ecp;
+  final double stack;
+  GenerateTabBar({Key key, this.stack, this.state, this.ecp}) : super(key: key);
+  _TabBar createState() => _TabBar();
+}
+
+class _TabBar extends State<GenerateTabBar>
+    with SingleTickerProviderStateMixin {
   CardClass cardRoutines = CardClass(null, true),
       cardEmergency = CardClass(null, false);
 
-  SlideBar() {
+  TabController _controller;
+
+  @override
+  void initState() {
+    super.initState();
     cardRoutines.dumpGenerate(
         true,
         25,
@@ -97,25 +108,17 @@ class SlideBar {
         10,
         () => dialogBox.ackAlert(currentContext, 'Trial', 'Emergency'),
         Colors.red);
-    this.close();
+    _controller = TabController(length: 3, vsync: this);
+    _controller.addListener(() {
+      setState(() {
+        print(_controller.index);
+        _controller.animateTo(_controller.index);
+      });
+    });
   }
 
-  Widget _blurLayer(bool blurVisible, double blurVal) {
-    return Visibility(
-        key: Key('BlurLayer'),
-        visible: blurVisible,
-        child: Container(
-            height: setting.screenSize.height,
-            width: setting.screenSize.width,
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: blurVal, sigmaY: blurVal),
-              child: Container(
-                color: Colors.black.withOpacity(0),
-              ),
-            )));
-  }
-
-  Widget _family(bool state, double stack) {
+  @override
+  Widget build(BuildContext context) {
     return Container(
         child: DefaultTabController(
             length: 3, // length of tabs
@@ -128,6 +131,7 @@ class SlideBar {
                         setting.theme.darkMode ? Colors.black87 : Colors.white,
                     height: 40,
                     child: TabBar(
+                      controller: _controller,
                       labelStyle: GoogleFonts.montserrat(
                           fontSize: 10, fontWeight: FontWeight.bold),
                       labelColor: Colors.green,
@@ -150,15 +154,18 @@ class SlideBar {
                               : Colors.white,
                           border: Border(
                               top: BorderSide(color: Colors.grey, width: 0.5))),
-                      child: TabBarView(children: <Widget>[
+                      child: TabBarView(controller: _controller, children: <
+                          Widget>[
                         Opacity(
-                            opacity: stack,
+                            opacity: widget.stack,
                             child: Stack(children: [
                               cardRoutines.cardsGrid(
-                                  state,
-                                  (state) ? Axis.vertical : Axis.horizontal,
-                                  (state) ? setting.drawerRowGet() : 1,
-                                  (state)
+                                  widget.state,
+                                  (widget.state)
+                                      ? Axis.vertical
+                                      : Axis.horizontal,
+                                  (widget.state) ? setting.drawerRowGet() : 1,
+                                  (widget.state)
                                       ? null
                                       : (setting.screenSize.height *
                                               setting
@@ -169,26 +176,30 @@ class SlideBar {
                             child: Stack(
                           children: [
                             Container(
-                              height: (setting.screenSize.height *
-                                          setting.ratioDrawerMaxHeightGet() -
-                                      40) -
-                                  (setting.screenSize.height *
-                                          setting.ratioDrawerMinHeightGet() -
-                                      40) -
-                                  0.5,
-                              //child: maps.maps()) //MapNew(),
-                            ),
+                                color: Colors.red,
+                                height: (setting.screenSize.height *
+                                            setting.ratioDrawerMaxHeightGet() -
+                                        40) -
+                                    (setting.screenSize.height *
+                                            setting.ratioDrawerMinHeightGet() -
+                                        40) -
+                                    0.5,
+                                child: maps.MapNew()),
                             Padding(
-                                padding:
-                                    EdgeInsets.only(top: emergencyCardspos),
-                                child: cardEmergency.cardsGrid(
-                                  false,
-                                  Axis.horizontal,
-                                  1,
-                                  setting.screenSize.height *
-                                          setting.ratioDrawerMinHeightGet() -
-                                      40,
-                                )),
+                                padding: EdgeInsets.only(top: widget.ecp),
+                                child: Container(
+                                    height: setting.screenSize.height *
+                                            setting.ratioDrawerMinHeightGet() -
+                                        40,
+                                    color: (setting.theme.darkMode)
+                                        ? Colors.black87
+                                        : Colors.white,
+                                    child: cardEmergency.cardsGrid(
+                                      false,
+                                      Axis.horizontal,
+                                      1,
+                                      null,
+                                    ))),
                           ],
                         )),
                         Container(
@@ -201,18 +212,37 @@ class SlideBar {
                       ]))
                 ])));
   }
+}
+
+class SlideBar {
+  Widget value, blurr;
+  SlideBar() {
+    this.close();
+  }
+
+  Widget _blurLayer(bool blurVisible, double blurVal) {
+    return Visibility(
+        key: Key('BlurLayer'),
+        visible: blurVisible,
+        child: Container(
+            height: setting.screenSize.height,
+            width: setting.screenSize.width,
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: blurVal, sigmaY: blurVal),
+              child: Container(
+                color: Colors.black.withOpacity(0),
+              ),
+            )));
+  }
 
   void close() {
     this.blurr = _blurLayer(false, 0);
-    this.value = _family(false, 1);
+    this.value = GenerateTabBar(stack: 1, state: false);
   }
 
   void set(double val) {
     bool state;
     this.blurr = _blurLayer(true, val * 5);
-    emergencyCardspos = val *
-        ((setting.screenSize.height * setting.ratioDrawerMaxHeightGet()) -
-            (setting.screenSize.height * setting.ratioDrawerMinHeightGet()));
     if (val >= 0.5) {
       val = (val - 0.5) * 2;
       state = true;
@@ -220,7 +250,13 @@ class SlideBar {
       val = 1 - val * 2;
       state = false;
     }
-    this.value = _family(state, val);
+    this.value = GenerateTabBar(
+        state: state,
+        stack: val,
+        ecp: val *
+            ((setting.screenSize.height * setting.ratioDrawerMaxHeightGet()) -
+                (setting.screenSize.height *
+                    setting.ratioDrawerMinHeightGet())));
   }
 }
 
@@ -333,6 +369,7 @@ class _Dashboard extends State<Dashboard> with SingleTickerProviderStateMixin {
                     slideBar.close();
                   });
                 },
+                parallaxEnabled: true,
                 backdropEnabled: true,
                 panel: slideBar.value,
                 body: Stack(children: [

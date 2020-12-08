@@ -99,7 +99,7 @@ class LocalFiles {
 }
 
 class Setting {
-  String apikey = "ef725f20d8e14cb08e487f74ac7cfc13";
+  String apikey = "ef725f20d8e14cb08e487f74ac7cfc13//";
   MyTheme theme;
   Size screenSize;
   int maximumNewsCount;

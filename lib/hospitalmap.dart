@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'dialogboxes.dart' show ackAlert;
+import 'dashboard.dart' show currentContext;
 
 class MapNew extends StatefulWidget {
   @override
@@ -73,24 +75,58 @@ class _MapNewState extends State<MapNew> {
               //function to get current location
               setupPositionLocator();
             }),
-
-          Padding(
-            padding: const EdgeInsets.only(top: 18.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                FloatingActionButton.extended(
-                  onPressed: () {
-                    launchDialer('tel: +6229779999');
-                  },
-                  label: Text("Dial"),
-                  icon: Icon(Icons.phone),
-                  backgroundColor: Colors.green[300],
-                ),
-              ],
-            ),
+        Padding(
+          padding: const EdgeInsets.only(top: 18.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              FloatingActionButton.extended(
+                onPressed: () {
+                  launchDialer('tel: +6229779999');
+                },
+                label: Text("Dial"),
+                icon: Icon(Icons.phone),
+                backgroundColor: Colors.green[300],
+              ),
+            ],
           ),
+        ),
       ]),
     );
   }
+}
+
+Widget myMap() {
+  final CameraPosition _myHome = CameraPosition(
+    target: LatLng(-6.196690, 106.888430),
+    zoom: 14.4746,
+  );
+  return Stack(children: <Widget>[
+    GoogleMap(
+        // padding: EdgeInsets.only(bottom: mapBottomPadding),
+        mapType: MapType.normal,
+        myLocationButtonEnabled: true,
+        //markers: _markers,
+        myLocationEnabled: true,
+        zoomGesturesEnabled: true,
+        zoomControlsEnabled: true,
+        initialCameraPosition: _myHome,
+        onMapCreated: (GoogleMapController controller) {}),
+    Padding(
+      padding: const EdgeInsets.only(top: 18.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          FloatingActionButton.extended(
+            onPressed: () {
+              ackAlert(currentContext, 'CallButton', 'onPress');
+            },
+            label: Text("Dial"),
+            icon: Icon(Icons.phone),
+            backgroundColor: Colors.green[300],
+          ),
+        ],
+      ),
+    ),
+  ]);
 }

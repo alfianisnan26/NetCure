@@ -176,7 +176,7 @@ class _NewsCards extends State<NewsCards> {
 
   Future<NewsGet> loadNews() async {
     final http.Response resp = await http.get(
-        "https://newsapi.org/v2/top-headlines?country=id}&category=health&apiKey=${setting.apikey}");
+        "https://newsapi.org/v2/top-headlines?country=id&category=health&apiKey=${setting.apikey}");
     NewsGet foo = NewsGet.fromJson(jsonDecode(resp.body));
     for (int a = 0; a <= setting.maximumNewsCountGet();) {
       final http.Response resp = await http.get(foo.articles[a].urlToImage);
