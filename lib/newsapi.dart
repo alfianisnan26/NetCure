@@ -110,7 +110,7 @@ class _ItemState extends State<Item> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
                           Text("${widget.resp.title}",
-                              maxLines: 4,c
+                              maxLines: 4,
                               overflow: TextOverflow.fade,
                               style: TextStyle(
                                   color: Colors.white,
