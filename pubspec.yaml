@@ -38,6 +38,8 @@ dependencies:
   webview_flutter: ^1.0.7
   url_launcher: any
   google_fonts: ^0.2.0
+  geolocator: ^6.1.7
+  google_maps_flutter: ^1.0.3
   path_provider: ^1.6.24
 
 dev_dependencies:
