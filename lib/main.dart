@@ -1,27 +1,41 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
-import 'package:google_fonts/google_fonts.dart';
 import 'dashboard.dart' as dashboard;
+import 'setting.dart';
 
 void main() {
   runApp(OpenClass());
 }
 
-class OpenClass extends StatelessWidget {
+class OpenClass extends StatefulWidget {
+  _OpenClass createState() => _OpenClass();
+}
+
+class _OpenClass extends State<OpenClass> {
+  @override
+  void initState() {
+    super.initState();
+    setting.init();
+    setting.theme.addListener(() {
+      setState(() {});
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-        initialRoute: '/',
-        routes: {
-          '/': (context) => NetCure(),
-          '/Login': (context) => NetCureLogin(),
-          '/Dashboard': (context) => dashboard.Dashboard(),
-        },
-        theme: ThemeData(
-            primarySwatch: Colors.amber,
-            textTheme: GoogleFonts.montserratTextTheme(
-              Theme.of(context).textTheme,
-            )));
+      debugShowCheckedModeBanner: false,
+      initialRoute: '/',
+      routes: {
+        '/': (context) => NetCure(),
+        '/Login': (context) => NetCureLogin(),
+        '/Dashboard': (context) => dashboard.Dashboard(),
+        '/Dashboard/Settings': (context) => SettingScreen()
+      },
+      themeMode: setting.theme.currentTheme(),
+      theme: setting.theme.get(false),
+      darkTheme: setting.theme.get(true),
+    );
   }
 }
 
@@ -48,7 +62,7 @@ class _State extends State<NetCure> {
 
   @override
   Widget build(BuildContext context) {
-    dashboard.screenSize = MediaQuery.of(context).size;
+    setting.screenSize = MediaQuery.of(context).size;
     return Scaffold(
         body: Hero(
       tag: 'banner',

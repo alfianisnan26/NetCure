@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'newsapi.dart' show Articles;
-import 'package:google_fonts/google_fonts.dart';
 import 'dart:io';
 
 // ignore: must_be_immutable
