@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:path_provider/path_provider.dart';
 
 class SettingScreen extends StatefulWidget {
   _SettingScreen createState() => _SettingScreen();
@@ -76,13 +79,27 @@ class MyTheme with ChangeNotifier {
   }
 }
 
-class LangAndNews {
-  LangAndNews(String newsLocale, String langLocale) {}
+class LocalFiles {
+  LocalFiles();
+  Future<bool> writeLocalFile(String data, String dir) async {
+    final String path = (await getApplicationDocumentsDirectory()).path;
+    File('$path/$dir').writeAsString(data);
+    return true;
+  }
+
+  Future<String> readcontent(String dir) async {
+    try {
+      final String path = (await getApplicationDocumentsDirectory()).path;
+      String contents = await File('$path/$dir').readAsString();
+      return contents;
+    } catch (e) {
+      return null;
+    }
+  }
 }
 
 class Setting {
-  String apikey = "cbf23a5f9b254b8992d5c0f9e2b9b6d3";
-  LangAndNews langnews;
+  String apikey = "ef725f20d8e14cb08e487f74ac7cfc13";
   MyTheme theme;
   Size screenSize;
   int maximumNewsCount;

@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.re_netcure">
+    package="com.netcure">
     <!-- io.flutter.app.FlutterApplication is an android.app.Application that
          calls FlutterMain.startInitialization(this); in its onCreate method.
          In most cases you can leave this as-is, but you if you want to provide
@@ -14,6 +14,10 @@
         android:name="io.flutter.app.FlutterApplication"
         android:label="re_netcure"
         android:icon="@mipmap/ic_launcher">
+
+        <meta-data android:name="com.google.android.geo.API_KEY"
+            android:value="${mapsApiKey}"/>
+
         <activity
             android:name=".MainActivity"
             android:launchMode="singleTop"
@@ -48,8 +52,5 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
-        <meta-data 
-          android:name="com.google.android.geo.API_KEY"
-          android:value="AIzaSyCjIuKrCUTzpz0MemaFFibaP-be9HnkZMQ"/>
     </application>
 </manifest>

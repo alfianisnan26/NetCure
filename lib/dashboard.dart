@@ -2,7 +2,8 @@ import 'dart:ui';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
-import 'package:re_netcure/hospitalmap.dart' as maps;
+//import 'package:re_netcure/hospitalmap.dart' as maps;
+//import 'maps.dart' as maps;
 import 'newsapi.dart';
 import 'setting.dart';
 import 'dialogboxes.dart' as dialogBox;
@@ -81,9 +82,23 @@ class CardClass {
 
 class SlideBar {
   Widget value, blurr;
-
+  double emergencyCardspos = 0;
   CardClass cardRoutines = CardClass(null, true),
       cardEmergency = CardClass(null, false);
+
+  SlideBar() {
+    cardRoutines.dumpGenerate(
+        true,
+        25,
+        () => dialogBox.ackAlert(currentContext, 'Trial', 'Routines'),
+        Colors.green);
+    cardEmergency.dumpGenerate(
+        false,
+        10,
+        () => dialogBox.ackAlert(currentContext, 'Trial', 'Emergency'),
+        Colors.red);
+    this.close();
+  }
 
   Widget _blurLayer(bool blurVisible, double blurVal) {
     return Visibility(
@@ -151,26 +166,29 @@ class SlideBar {
                                           40))
                             ])),
                         Container(
-                            child: Column(
-                          mainAxisAlignment: MainAxisAlignment.start,
+                            child: Stack(
                           children: [
-                            cardEmergency.cardsGrid(
-                              false,
-                              Axis.horizontal,
-                              1,
-                              setting.screenSize.height *
-                                      setting.ratioDrawerMinHeightGet() -
-                                  40,
-                            ),
                             Container(
-                                height: (setting.screenSize.height *
-                                            setting.ratioDrawerMaxHeightGet() -
-                                        40) -
-                                    (setting.screenSize.height *
-                                            setting.ratioDrawerMinHeightGet() -
-                                        40) -
-                                    0.5,
-                                child: maps.MapNew()),
+                              height: (setting.screenSize.height *
+                                          setting.ratioDrawerMaxHeightGet() -
+                                      40) -
+                                  (setting.screenSize.height *
+                                          setting.ratioDrawerMinHeightGet() -
+                                      40) -
+                                  0.5,
+                              //child: maps.maps()) //MapNew(),
+                            ),
+                            Padding(
+                                padding:
+                                    EdgeInsets.only(top: emergencyCardspos),
+                                child: cardEmergency.cardsGrid(
+                                  false,
+                                  Axis.horizontal,
+                                  1,
+                                  setting.screenSize.height *
+                                          setting.ratioDrawerMinHeightGet() -
+                                      40,
+                                )),
                           ],
                         )),
                         Container(
@@ -184,20 +202,6 @@ class SlideBar {
                 ])));
   }
 
-  SlideBar() {
-    cardRoutines.dumpGenerate(
-        true,
-        25,
-        () => dialogBox.ackAlert(currentContext, 'Trial', 'Routines'),
-        Colors.green);
-    cardEmergency.dumpGenerate(
-        false,
-        10,
-        () => dialogBox.ackAlert(currentContext, 'Trial', 'Emergency'),
-        Colors.red);
-    this.close();
-  }
-
   void close() {
     this.blurr = _blurLayer(false, 0);
     this.value = _family(false, 1);
@@ -206,6 +210,9 @@ class SlideBar {
   void set(double val) {
     bool state;
     this.blurr = _blurLayer(true, val * 5);
+    emergencyCardspos = val *
+        ((setting.screenSize.height * setting.ratioDrawerMaxHeightGet()) -
+            (setting.screenSize.height * setting.ratioDrawerMinHeightGet()));
     if (val >= 0.5) {
       val = (val - 0.5) * 2;
       state = true;

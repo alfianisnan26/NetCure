@@ -3,9 +3,7 @@ import 'dart:async';
 import 'dashboard.dart' as dashboard;
 import 'setting.dart';
 
-void main() {
-  runApp(OpenClass());
-}
+void main() => runApp(OpenClass());
 
 class OpenClass extends StatefulWidget {
   _OpenClass createState() => _OpenClass();
@@ -30,7 +28,7 @@ class _OpenClass extends State<OpenClass> {
         '/': (context) => NetCure(),
         '/Login': (context) => NetCureLogin(),
         '/Dashboard': (context) => dashboard.Dashboard(),
-        '/Dashboard/Settings': (context) => SettingScreen()
+        '/Dashboard/Settings': (context) => SettingScreen(),
       },
       themeMode: setting.theme.currentTheme(),
       theme: setting.theme.get(false),

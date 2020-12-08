@@ -1,4 +1,4 @@
-package com.example.re_netcure
+package com.netcure
 
 import io.flutter.embedding.android.FlutterActivity
 
