@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
+import 'package:re_netcure/hospitalmap.dart';
 import 'newsapi.dart';
 import 'setting.dart';
 import 'dialogboxes.dart';
@@ -107,9 +108,10 @@ class SlideBar {
                             ])),
                         Container(
                           child: Center(
-                            child: Text('Display Tab 2',
-                                style: TextStyle(
-                                    fontSize: 22, fontWeight: FontWeight.bold)),
+                            child: MapNew(),
+                            // child: Text('Display Tab 2',
+                            //     style: TextStyle(
+                            //         fontSize: 22, fontWeight: FontWeight.bold)),
                           ),
                         ),
                         Container(
