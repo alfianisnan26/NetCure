@@ -6,8 +6,6 @@ import 'newsapi.dart';
 import 'setting.dart';
 import 'dialogboxes.dart';
 
-Size screenSize;
-
 BuildContext currentContext;
 
 class SlideBar {
@@ -62,8 +60,8 @@ class SlideBar {
         key: Key('BlurLayer'),
         visible: blurVisible,
         child: Container(
-            height: screenSize.height,
-            width: screenSize.width,
+            height: setting.screenSize.height,
+            width: setting.screenSize.width,
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: blurVal, sigmaY: blurVal),
               child: Container(
@@ -81,6 +79,7 @@ class SlideBar {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
                   Container(
+                    height: 40,
                     child: TabBar(
                       labelColor: Colors.green,
                       unselectedLabelColor: Colors.black,
@@ -92,7 +91,9 @@ class SlideBar {
                     ),
                   ),
                   Container(
-                      height: screenSize.height - 248, //height of TabBarView
+                      height: (setting.screenSize.height) *
+                              setting.ratioDrawerMaxHeightGet() -
+                          40, //height of TabBarView
                       decoration: BoxDecoration(
                           border: Border(
                               top: BorderSide(color: Colors.grey, width: 0.5))),
@@ -102,8 +103,13 @@ class SlideBar {
                             child: Stack(children: [
                               _myRoutines(
                                   (state) ? Axis.vertical : Axis.horizontal,
-                                  (state) ? 3 : 1,
-                                  (state) ? null : 100)
+                                  (state) ? setting.drawerRowGet() : 1,
+                                  (state)
+                                      ? null
+                                      : (setting.screenSize.height *
+                                              setting
+                                                  .ratioDrawerMinHeightGet() -
+                                          40))
                             ])),
                         Container(
                           child: Center(
@@ -239,8 +245,10 @@ class _Dashboard extends State<Dashboard> with SingleTickerProviderStateMixin {
             child: NavDrawer()),
         body: SafeArea(
             child: SlidingUpPanel(
-                minHeight: 250,
-                maxHeight: MediaQuery.of(context).size.height - 200,
+                minHeight: (setting.screenSize.height *
+                    setting.ratioDrawerMinHeightGet()),
+                maxHeight: (setting.screenSize.height *
+                    setting.ratioDrawerMaxHeightGet()),
                 onPanelSlide: (val) {
                   setState(() {
                     slideBar.set(val);
@@ -257,8 +265,8 @@ class _Dashboard extends State<Dashboard> with SingleTickerProviderStateMixin {
                   Hero(
                     tag: 'banner',
                     child: Container(
-                        height: screenSize.height,
-                        width: screenSize.width,
+                        height: setting.screenSize.height,
+                        width: setting.screenSize.width,
                         alignment: Alignment.topCenter,
                         padding: EdgeInsets.all(10),
                         child: Stack(

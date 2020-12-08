@@ -1,26 +1,49 @@
+import 'dart:ui';
+
 class Setting {
-  int intMaximumNewsCount;
-  bool boolAutoPlay;
-  Duration durationAutoPlayTime;
+  Size screenSize;
+  int maximumNewsCount;
+  int drawerRow;
+  bool autoPlay;
+  Duration autoPlayTime;
   String newsLocale;
-  String valNewsLocale() {
+  double ratioDrawerMaxHeight, ratioDrawerMinHeight;
+  double ratioDrawerMaxHeightGet() {
+    if (ratioDrawerMaxHeight == null) return 0.8;
+    return ratioDrawerMaxHeight;
+  }
+
+  int drawerRowGet() {
+    if (drawerRow == null) return 3;
+    return drawerRow;
+  }
+
+  double ratioDrawerMinHeightGet() {
+    if (ratioDrawerMinHeight == null)
+      return 0.20;
+    else if ((screenSize.height * ratioDrawerMinHeight) < 80)
+      return screenSize.height / 80;
+    return ratioDrawerMinHeight;
+  }
+
+  String newsLocaleGet() {
     if (newsLocale == null) return "us";
     return this.newsLocale;
   }
 
-  bool autoPlay() {
-    if (boolAutoPlay == null) return true;
-    return this.boolAutoPlay;
+  bool autoPlayGet() {
+    if (autoPlay == null) return true;
+    return this.autoPlay;
   }
 
-  Duration autoPlayTime() {
-    if (durationAutoPlayTime == null) return Duration(seconds: 5);
-    return this.durationAutoPlayTime;
+  Duration autoPlayTimeGet() {
+    if (autoPlayTime == null) return Duration(seconds: 5);
+    return this.autoPlayTime;
   }
 
-  int maximumNewsCount() {
-    if (intMaximumNewsCount == null) return 5;
-    return this.intMaximumNewsCount;
+  int maximumNewsCountGet() {
+    if (maximumNewsCount == null) return 5;
+    return this.maximumNewsCount;
   }
 }
 

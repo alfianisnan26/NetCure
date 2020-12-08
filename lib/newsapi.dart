@@ -177,9 +177,9 @@ class _NewsCards extends State<NewsCards> {
 
   Future<NewsGet> loadNews() async {
     final http.Response resp = await http.get(
-        "https://newsapi.org/v2/top-headlines?country=${setting.valNewsLocale()}&category=health&apiKey=9c61a9a50a194efdadb202fb91cbc490");
+        "https://newsapi.org/v2/top-headlines?country=${setting.newsLocaleGet()}&category=health&apiKey=9c61a9a50a194efdadb202fb91cbc490");
     NewsGet foo = NewsGet.fromJson(jsonDecode(resp.body));
-    for (int a = 0; a <= setting.maximumNewsCount();) {
+    for (int a = 0; a <= setting.maximumNewsCountGet();) {
       final http.Response resp = await http.get(foo.articles[a].urlToImage);
       if (resp.statusCode == 200) {
         foo.articles[a].image =
@@ -194,7 +194,8 @@ class _NewsCards extends State<NewsCards> {
       } else
         foo.articles.removeAt(a);
     }
-    foo.articles.removeRange(setting.maximumNewsCount(), foo.articles.length);
+    foo.articles
+        .removeRange(setting.maximumNewsCountGet(), foo.articles.length);
     return foo;
   }
 
@@ -205,8 +206,8 @@ class _NewsCards extends State<NewsCards> {
             children: <Widget>[
           CarouselSlider(
             height: 200.0,
-            autoPlay: setting.autoPlay(),
-            autoPlayInterval: setting.autoPlayTime(),
+            autoPlay: setting.autoPlayGet(),
+            autoPlayInterval: setting.autoPlayTimeGet(),
             autoPlayAnimationDuration: Duration(milliseconds: 800),
             autoPlayCurve: Curves.fastOutSlowIn,
             pauseAutoPlayOnTouch: Duration(seconds: 10),
