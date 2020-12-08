@@ -1,5 +1,5 @@
 import 'dart:ui';
-
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
 import 'newsapi.dart';
@@ -11,9 +11,9 @@ BuildContext currentContext;
 class SlideBar {
   Widget value, blurr;
 
-  List<Widget> generatedRoutines;
+  List<Widget> generatedRoutines, generatedEmergency;
 
-  List<Widget> generateRoutines() {
+  List<Widget> generateCards() {
     return List.generate(50, (index) {
       if (index == 0) {
         return Hero(
@@ -44,7 +44,7 @@ class SlideBar {
     });
   }
 
-  Widget _myRoutines(Axis myAxis, int crossAxis, double size) {
+  Widget _cards(Axis myAxis, int crossAxis, double size, List<Widget> cards) {
     return Container(
       height: size,
       child: GridView.count(
@@ -79,14 +79,19 @@ class SlideBar {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
                   Container(
+                    color:
+                        setting.theme.darkMode ? Colors.black87 : Colors.white,
                     height: 40,
                     child: TabBar(
+                      labelStyle: GoogleFonts.montserrat(
+                          fontSize: 10, fontWeight: FontWeight.bold),
                       labelColor: Colors.green,
-                      unselectedLabelColor: Colors.black,
+                      unselectedLabelColor:
+                          setting.theme.darkMode ? Colors.white : Colors.black,
                       tabs: [
-                        Tab(text: 'My Routines'),
-                        Tab(text: 'Emergency'),
-                        Tab(text: 'CureLogs'),
+                        Tab(text: 'MY ROUTINES'),
+                        Tab(text: 'EMERGENCY'),
+                        Tab(text: 'CURELOGS'),
                       ],
                     ),
                   ),
@@ -95,13 +100,16 @@ class SlideBar {
                               setting.ratioDrawerMaxHeightGet() -
                           40, //height of TabBarView
                       decoration: BoxDecoration(
+                          color: setting.theme.darkMode
+                              ? Colors.black87
+                              : Colors.white,
                           border: Border(
                               top: BorderSide(color: Colors.grey, width: 0.5))),
                       child: TabBarView(children: <Widget>[
                         Opacity(
                             opacity: stack,
                             child: Stack(children: [
-                              _myRoutines(
+                              _cards(
                                   (state) ? Axis.vertical : Axis.horizontal,
                                   (state) ? setting.drawerRowGet() : 1,
                                   (state)
@@ -109,13 +117,27 @@ class SlideBar {
                                       : (setting.screenSize.height *
                                               setting
                                                   .ratioDrawerMinHeightGet() -
-                                          40))
+                                          40),
+                                  generatedRoutines)
                             ])),
                         Container(
                           child: Center(
-                            child: Text('Display Tab 2',
-                                style: TextStyle(
-                                    fontSize: 22, fontWeight: FontWeight.bold)),
+                            child: Column(
+                              children: [
+                                _cards(
+                                    Axis.horizontal,
+                                    1,
+                                    (setting.screenSize.height *
+                                            setting.ratioDrawerMinHeightGet() -
+                                        40),
+                                    generatedEmergency),
+                                Container(
+                                  color: Colors.red,
+                                  height: 100,
+                                  width: setting.screenSize.width,
+                                )
+                              ],
+                            ),
                           ),
                         ),
                         Container(
@@ -130,7 +152,8 @@ class SlideBar {
   }
 
   SlideBar() {
-    generatedRoutines = generateRoutines();
+    generatedRoutines = generateCards();
+    generatedEmergency = generateCards();
     this.close();
   }
 
@@ -163,10 +186,11 @@ class NavDrawer extends StatelessWidget {
           DrawerHeader(
             child: Padding(
                 padding: EdgeInsets.fromLTRB(0, 100, 0, 0),
-                child: Text(
-                  'Who Am I',
-                  style: TextStyle(color: Colors.white, fontSize: 25),
-                )),
+                child: Text('Who Am I',
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 25,
+                        fontWeight: FontWeight.w900))),
             decoration: BoxDecoration(
                 color: Colors.green,
                 image: DecorationImage(
@@ -175,28 +199,30 @@ class NavDrawer extends StatelessWidget {
                         'https://cdn.mos.cms.futurecdn.net/YLMh9EJRPhmht9GWNhiN7G-970-80.jpg.webp'))),
           ),
           ListTile(
-            leading: Icon(Icons.input),
-            title: Text('Welcome'),
-            onTap: () => {},
-          ),
-          ListTile(
             leading: Icon(Icons.verified_user),
-            title: Text('Profile'),
+            title:
+                Text('PROFILE', style: TextStyle(fontWeight: FontWeight.bold)),
             onTap: () => {Navigator.of(context).pop()},
           ),
           ListTile(
             leading: Icon(Icons.settings),
-            title: Text('Settings'),
-            onTap: () => {Navigator.of(context).pop()},
+            title:
+                Text('SETTING', style: TextStyle(fontWeight: FontWeight.bold)),
+            onTap: () => {
+              Navigator.of(context).pop(),
+              Navigator.pushNamed(context, '/Dashboard/Settings')
+            },
           ),
           ListTile(
             leading: Icon(Icons.border_color),
-            title: Text('Feedback'),
+            title:
+                Text('FEEDBACK', style: TextStyle(fontWeight: FontWeight.bold)),
             onTap: () => {Navigator.of(context).pop()},
           ),
           ListTile(
               leading: Icon(Icons.exit_to_app),
-              title: Text('Logout'),
+              title:
+                  Text('LOGOUT', style: TextStyle(fontWeight: FontWeight.bold)),
               onTap: () => Navigator.pushNamedAndRemoveUntil(
                   context, '/', ModalRoute.withName('/'))),
         ],

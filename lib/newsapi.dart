@@ -6,7 +6,6 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:re_netcure/dialogboxes.dart';
 import 'setting.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class Source {
   String id;
@@ -177,7 +176,7 @@ class _NewsCards extends State<NewsCards> {
 
   Future<NewsGet> loadNews() async {
     final http.Response resp = await http.get(
-        "https://newsapi.org/v2/top-headlines?country=${setting.newsLocaleGet()}&category=health&apiKey=9c61a9a50a194efdadb202fb91cbc490");
+        "https://newsapi.org/v2/top-headlines?country=id}&category=health&apiKey=${setting.apikey}");
     NewsGet foo = NewsGet.fromJson(jsonDecode(resp.body));
     for (int a = 0; a <= setting.maximumNewsCountGet();) {
       final http.Response resp = await http.get(foo.articles[a].urlToImage);
@@ -237,8 +236,9 @@ class _NewsCards extends State<NewsCards> {
                 margin: EdgeInsets.symmetric(vertical: 10.0, horizontal: 2.0),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color:
-                      _currentIndex == index ? Colors.purple[200] : Colors.grey,
+                  color: _currentIndex == index
+                      ? Colors.deepPurple[800]
+                      : Colors.grey,
                 ),
               );
             }),

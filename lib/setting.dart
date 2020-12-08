@@ -1,12 +1,95 @@
-import 'dart:ui';
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+
+class SettingScreen extends StatefulWidget {
+  _SettingScreen createState() => _SettingScreen();
+}
+
+class _SettingScreen extends State<SettingScreen> {
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
+  Widget menuSetting(String title, Widget child) {
+    return Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [Text(title), child]);
+  }
+
+  @override
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text("Settings")),
+      body: SafeArea(
+          minimum: EdgeInsets.all(10),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: <Widget>[
+              menuSetting(
+                  'Dark Mode',
+                  Switch(
+                    value: setting.theme.darkMode,
+                    onChanged: (val) {
+                      setting.theme.switchTheme();
+                    },
+                  )),
+              menuSetting('News Locale',
+                  DropdownButton(elevation: 1, items: [], onChanged: (val) {})),
+            ],
+          )),
+    );
+  }
+}
+
+class MyTheme with ChangeNotifier {
+  bool darkMode = false;
+  ThemeMode currentTheme() {
+    return darkMode ? ThemeMode.dark : ThemeMode.light;
+  }
+
+  void switchTheme() {
+    darkMode = !darkMode;
+    notifyListeners();
+  }
+
+  ThemeData get(bool isDark) {
+    TextTheme txtTheme =
+        (isDark ? ThemeData.dark() : ThemeData.light()).textTheme;
+    ColorScheme colorScheme = isDark ? ColorScheme.dark() : ColorScheme.light();
+    var t = ThemeData.from(
+            textTheme: GoogleFonts.montserratTextTheme(txtTheme),
+            colorScheme: colorScheme)
+        .copyWith(
+            buttonColor: Colors.purple,
+            cursorColor: Colors.purple,
+            highlightColor: Colors.purple,
+            toggleableActiveColor: Colors.purple);
+
+    return t;
+  }
+}
+
+class LangAndNews {
+  LangAndNews(String newsLocale, String langLocale) {}
+}
 
 class Setting {
+  String apikey = "cbf23a5f9b254b8992d5c0f9e2b9b6d3";
+  LangAndNews langnews;
+  MyTheme theme;
   Size screenSize;
   int maximumNewsCount;
   int drawerRow;
   bool autoPlay;
   Duration autoPlayTime;
-  String newsLocale;
+  int newsLocale;
   double ratioDrawerMaxHeight, ratioDrawerMinHeight;
   double ratioDrawerMaxHeightGet() {
     if (ratioDrawerMaxHeight == null) return 0.8;
@@ -26,11 +109,6 @@ class Setting {
     return ratioDrawerMinHeight;
   }
 
-  String newsLocaleGet() {
-    if (newsLocale == null) return "us";
-    return this.newsLocale;
-  }
-
   bool autoPlayGet() {
     if (autoPlay == null) return true;
     return this.autoPlay;
@@ -44,6 +122,10 @@ class Setting {
   int maximumNewsCountGet() {
     if (maximumNewsCount == null) return 5;
     return this.maximumNewsCount;
+  }
+
+  void init() {
+    theme = MyTheme();
   }
 }
 
