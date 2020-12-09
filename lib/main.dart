@@ -1,9 +1,16 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:connectivity/connectivity.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'dashboard.dart' as dashboard;
+import 'registrationpage.dart' as registrationpage;
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(OpenClass());
 }
 
@@ -16,6 +23,7 @@ class OpenClass extends StatelessWidget {
           '/': (context) => NetCure(),
           '/Login': (context) => NetCureLogin(),
           '/Dashboard': (context) => dashboard.Dashboard(),
+          '/RegistrationPage': (context) => registrationpage.RegistrationPage(),
         },
         theme: ThemeData(
             primarySwatch: Colors.amber,
@@ -40,10 +48,15 @@ class _State extends State<NetCure> {
     return new Timer(duration, route);
   }
 
+  runFirebase() async {
+    await Firebase.initializeApp();
+  }
+
   @override
   void initState() {
     super.initState();
     startTime();
+    runFirebase();
   }
 
   @override
@@ -80,12 +93,58 @@ class NetCureLogin extends StatefulWidget {
 }
 
 class _Login extends State<NetCureLogin> {
-  TextEditingController nameController = TextEditingController();
+  TextEditingController emailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
+
+  final GlobalKey<ScaffoldState> scaffoldKey = new GlobalKey<ScaffoldState>();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  void showSnackBar(String title) {
+    final snackbar = SnackBar(
+      content: Text(
+        title,
+        textAlign: TextAlign.center,
+        style: TextStyle(fontSize: 15),
+      ),
+    );
+    scaffoldKey.currentState.showSnackBar(snackbar);
+  }
+
+  login() async {
+    final UserCredential userCredential = (await _auth
+        .signInWithEmailAndPassword(
+      email: emailController.text,
+      password: passwordController.text,
+    )
+        .catchError((ex) {
+      ;
+      // check error and display messages
+      PlatformException thisEx = ex;
+      showSnackBar(thisEx.message);
+    }));
+
+    final uid = FirebaseAuth.instance.currentUser.uid;
+    print(uid);
+
+    if (uid != null) {
+      //verify login
+      DatabaseReference userRef =
+          FirebaseDatabase.instance.reference().child('users/${uid}');
+
+      userRef.once().then((DataSnapshot snapshot) {
+        if (snapshot.value != null) {
+          Navigator.pushNamedAndRemoveUntil(
+              context, '/Dashboard', (route) => false);
+        }
+      });
+    }
+    return uid;
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+        key: scaffoldKey,
         body: Container(
             height: MediaQuery.of(context).size.height,
             width: MediaQuery.of(context).size.width,
@@ -134,7 +193,7 @@ class _Login extends State<NetCureLogin> {
                         padding: EdgeInsets.symmetric(horizontal: 40),
                         child: TextField(
                           textAlign: TextAlign.center,
-                          controller: nameController,
+                          controller: emailController,
                           decoration: InputDecoration(
                             isDense: true,
                           ),
@@ -182,7 +241,7 @@ class _Login extends State<NetCureLogin> {
                                   ],
                                 ),
                                 onPressed: () {
-                                  print(nameController.text);
+                                  print(emailController.text);
                                   print(passwordController.text);
                                 },
                               ))),
@@ -207,6 +266,10 @@ class _Login extends State<NetCureLogin> {
                                     child: Text('Sign Up'),
                                     onPressed: () {
                                       //go to Sign Up Page
+                                      Navigator.pushNamedAndRemoveUntil(
+                                          context,
+                                          '/RegistrationPage',
+                                          (route) => false);
                                     },
                                   )),
                               Container(
@@ -221,11 +284,39 @@ class _Login extends State<NetCureLogin> {
                                     textColor: Colors.white,
                                     color: Color.fromRGBO(155, 246, 161, 1),
                                     child: Text('Login'),
-                                    onPressed: () {
-                                      print(nameController.text);
-                                      print(passwordController.text);
-                                      Navigator.pushNamedAndRemoveUntil(context,
-                                          '/Dashboard', (route) => false);
+                                    onPressed: () async {
+                                      // check if user exists
+                                      login();
+                                      if (login()) {
+                                        showSnackBar(
+                                            'Login failed, check detail or Register');
+                                        return;
+                                      }
+
+                                      //check network availability
+                                      var connectivityResult =
+                                          await Connectivity()
+                                              .checkConnectivity();
+                                      if (connectivityResult !=
+                                              ConnectivityResult.mobile &&
+                                          connectivityResult !=
+                                              ConnectivityResult.wifi) {
+                                        showSnackBar(
+                                            'No internet connectivity. Try again');
+                                        return;
+                                      }
+
+                                      if (!emailController.text.contains('@')) {
+                                        showSnackBar(
+                                            'Please enter a valid email address');
+                                        return;
+                                      }
+
+                                      if (passwordController.text.length < 8) {
+                                        showSnackBar(
+                                            'Password must be atleast 8 characters');
+                                        return;
+                                      }
                                     },
                                   )),
                             ],

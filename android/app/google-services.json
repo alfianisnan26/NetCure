@@ -1,0 +1,93 @@
+{
+  "project_info": {
+    "project_number": "993697681266",
+    "firebase_url": "https://net-cure.firebaseio.com",
+    "project_id": "net-cure",
+    "storage_bucket": "net-cure.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:993697681266:android:8f668dfedbffb749dc17eb",
+        "android_client_info": {
+          "package_name": "com.example.netcure"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "993697681266-b3hnk45aeunkobjopap233ov2i7gqvbp.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.netcure",
+            "certificate_hash": "b9b32c5276f117bdf46eaeb715d8dd89b02d9671"
+          }
+        },
+        {
+          "client_id": "993697681266-e07cjsav2da0l43m1mjamujd219ckqro.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.netcure",
+            "certificate_hash": "8716c7449f03a4c268a7090a8e4ac8a2a3b5168d"
+          }
+        },
+        {
+          "client_id": "993697681266-rpanuur2snhpdldqo7t2e58pu75sekm4.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCjIuKrCUTzpz0MemaFFibaP-be9HnkZMQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "993697681266-rpanuur2snhpdldqo7t2e58pu75sekm4.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:993697681266:android:c0e69be0686b28efdc17eb",
+        "android_client_info": {
+          "package_name": "com.example.re_netcure"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "993697681266-hl5q15rmj25478g44pfav8ri78ja6mim.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.re_netcure",
+            "certificate_hash": "8716c7449f03a4c268a7090a8e4ac8a2a3b5168d"
+          }
+        },
+        {
+          "client_id": "993697681266-rpanuur2snhpdldqo7t2e58pu75sekm4.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCjIuKrCUTzpz0MemaFFibaP-be9HnkZMQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "993697681266-rpanuur2snhpdldqo7t2e58pu75sekm4.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

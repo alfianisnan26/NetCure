@@ -40,6 +40,10 @@ dependencies:
   google_fonts: ^0.2.0
   geolocator: ^6.1.7
   google_maps_flutter: ^1.0.6
+  firebase_auth: ^0.18.3
+  firebase_database: ^4.3.0
+  firebase_core: ^0.5.2
+  connectivity: ^2.0.1
 
 dev_dependencies:
   flutter_test:

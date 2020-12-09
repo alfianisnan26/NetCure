@@ -14,7 +14,7 @@ class _MapNewState extends State<MapNew> {
   final GlobalKey<ScaffoldState> scaffoldKey = new GlobalKey<ScaffoldState>();
   final Set<Marker> _markers = {};
 
-  double mapBottomPadding = 250;
+  double mapTopPadding = 150;
   double searchSheetHeight = (Platform.isIOS) ? 300 : 275;
 
   Position currentPosition;
@@ -56,7 +56,7 @@ class _MapNewState extends State<MapNew> {
     return Scaffold(
       body: Stack(children: <Widget>[
         GoogleMap(
-            // padding: EdgeInsets.only(bottom: mapBottomPadding),
+            padding: EdgeInsets.only(top: mapTopPadding),
             mapType: MapType.normal,
             myLocationButtonEnabled: true,
             markers: _markers,
