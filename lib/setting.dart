@@ -81,7 +81,11 @@ class LangAndNews {
 }
 
 class Setting {
+<<<<<<< HEAD
   String apikey = "1771d36eeb9b4cbca1c4e5560722f43b";
+=======
+  String apikey = "cbf23a5f9b254b8992d5c0f9e2b9b6d3";
+>>>>>>> 5df89dafb086f713aca5eff97fada6f12d9dfabe
   LangAndNews langnews;
   MyTheme theme;
   Size screenSize;

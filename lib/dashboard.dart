@@ -2,16 +2,26 @@ import 'dart:ui';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
-import 'package:re_netcure/hospitalmap.dart';
+import 'package:re_netcure/hospitalmap.dart' as maps;
 import 'newsapi.dart';
 import 'setting.dart';
+<<<<<<< HEAD
 import 'dialogboxes.dart';
+=======
+import 'dialogboxes.dart' as dialogBox;
+>>>>>>> 5df89dafb086f713aca5eff97fada6f12d9dfabe
 
 BuildContext currentContext;
 
-class SlideBar {
-  Widget value, blurr;
+class CardItem {
+  Function onTap;
+  var color;
+  Widget smallWidget;
+  Widget bigWidget;
+  CardItem(this.onTap, this.color, this.smallWidget, this.bigWidget);
+}
 
+<<<<<<< HEAD
   List<Widget> generatedRoutines, generatedEmergency;
 
   List<Widget> generateCards() {
@@ -41,20 +51,79 @@ class SlideBar {
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.all(Radius.circular(10))),
             color: Colors.amber,
+=======
+class CardClass {
+  List<Widget> cardBig, cardSmall;
+  List<CardItem> myCards;
+  bool canBig = false;
+  CardClass(this.myCards, this.canBig) {
+    if (myCards != null) renderCards();
+  }
+
+  void dumpGenerate(bool canBig, int length, Function func, var color) {
+    this.canBig = canBig;
+    this.myCards = List.generate(length, (index) {
+      return CardItem(
+          func,
+          color,
+          Center(child: Text('${index + 1}', style: TextStyle(fontSize: 20))),
+          Center(
+              child: Text(
+            '${index + 1}',
+            style: TextStyle(fontSize: 30),
+>>>>>>> 5df89dafb086f713aca5eff97fada6f12d9dfabe
           )));
+    });
+    renderCards();
+  }
+
+<<<<<<< HEAD
+  Widget _cards(Axis myAxis, int crossAxis, double size, List<Widget> cards) {
+=======
+  void renderCards() {
+    cardSmall = List.generate(myCards.length, (index) {
+      return Container(
+          child: GestureDetector(
+              onTap: myCards[index].onTap,
+              child: Card(
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(10))),
+                color: myCards[index].color,
+                child: myCards[index].smallWidget,
+              )));
+    });
+    if (!canBig) return;
+    cardBig = List.generate(myCards.length, (index) {
+      return Container(
+          child: GestureDetector(
+              onTap: myCards[index].onTap,
+              child: Card(
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(10))),
+                color: myCards[index].color,
+                child: myCards[index].bigWidget,
+              )));
     });
   }
 
-  Widget _cards(Axis myAxis, int crossAxis, double size, List<Widget> cards) {
+  Widget cardsGrid(bool isbig, Axis myAxis, int crossAxis, double size) {
+>>>>>>> 5df89dafb086f713aca5eff97fada6f12d9dfabe
     return Container(
       height: size,
       child: GridView.count(
           scrollDirection: myAxis,
           padding: EdgeInsets.all(5),
           crossAxisCount: crossAxis,
-          children: generatedRoutines),
+          children: (isbig) ? cardBig : cardSmall),
     );
   }
+}
+
+class SlideBar {
+  Widget value, blurr;
+
+  CardClass cardRoutines = CardClass(null, true),
+      cardEmergency = CardClass(null, false);
 
   Widget _blurLayer(bool blurVisible, double blurVal) {
     return Visibility(
@@ -110,7 +179,12 @@ class SlideBar {
                         Opacity(
                             opacity: stack,
                             child: Stack(children: [
+<<<<<<< HEAD
                               _cards(
+=======
+                              cardRoutines.cardsGrid(
+                                  state,
+>>>>>>> 5df89dafb086f713aca5eff97fada6f12d9dfabe
                                   (state) ? Axis.vertical : Axis.horizontal,
                                   (state) ? setting.drawerRowGet() : 1,
                                   (state)
@@ -118,6 +192,7 @@ class SlideBar {
                                       : (setting.screenSize.height *
                                               setting
                                                   .ratioDrawerMinHeightGet() -
+<<<<<<< HEAD
                                           40),
                                   generatedRoutines)
                             ])),
@@ -142,6 +217,33 @@ class SlideBar {
                             ),
                           ),
                         ),
+=======
+                                          40))
+                            ])),
+                        Container(
+                            child: Column(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            cardEmergency.cardsGrid(
+                              false,
+                              Axis.horizontal,
+                              1,
+                              setting.screenSize.height *
+                                      setting.ratioDrawerMinHeightGet() -
+                                  40,
+                            ),
+                            Container(
+                                height: (setting.screenSize.height *
+                                            setting.ratioDrawerMaxHeightGet() -
+                                        40) -
+                                    (setting.screenSize.height *
+                                            setting.ratioDrawerMinHeightGet() -
+                                        40) -
+                                    0.5,
+                                child: maps.MapNew()),
+                          ],
+                        )),
+>>>>>>> 5df89dafb086f713aca5eff97fada6f12d9dfabe
                         Container(
                           child: Center(
                             child: Text('Display Tab 3',
@@ -154,8 +256,21 @@ class SlideBar {
   }
 
   SlideBar() {
+<<<<<<< HEAD
     generatedRoutines = generateCards();
     generatedEmergency = generateCards();
+=======
+    cardRoutines.dumpGenerate(
+        true,
+        25,
+        () => dialogBox.ackAlert(currentContext, 'Trial', 'Routines'),
+        Colors.green);
+    cardEmergency.dumpGenerate(
+        false,
+        10,
+        () => dialogBox.ackAlert(currentContext, 'Trial', 'Emergency'),
+        Colors.red);
+>>>>>>> 5df89dafb086f713aca5eff97fada6f12d9dfabe
     this.close();
   }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+<<<<<<< HEAD
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:connectivity/connectivity.dart';
@@ -9,6 +10,9 @@ import 'package:firebase_database/firebase_database.dart';
 import 'dashboard.dart' as dashboard;
 import 'registrationpage.dart' as registrationpage;
 import 'package:re_netcure/progressdialog.dart';
+=======
+import 'dashboard.dart' as dashboard;
+>>>>>>> 5df89dafb086f713aca5eff97fada6f12d9dfabe
 import 'setting.dart';
 
 void main() {
