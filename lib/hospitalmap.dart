@@ -14,7 +14,7 @@ class _MapNewState extends State<MapNew> {
   final GlobalKey<ScaffoldState> scaffoldKey = new GlobalKey<ScaffoldState>();
   final Set<Marker> _markers = {};
 
-  double mapTopPadding = 150;
+  double mapTopPadding = 40;
   double searchSheetHeight = (Platform.isIOS) ? 300 : 275;
 
   Position currentPosition;
