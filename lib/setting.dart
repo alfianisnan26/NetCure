@@ -63,13 +63,22 @@ class MyTheme with ChangeNotifier {
   }
 
   ThemeData get(bool isDark) {
-    TextTheme txtTheme =
-        (isDark ? ThemeData.dark() : ThemeData.light()).textTheme;
-    ColorScheme colorScheme = isDark ? ColorScheme.dark() : ColorScheme.light();
+    TextTheme txtTheme = (isDark
+            ? ThemeData.dark()
+            : ThemeData.light()
+                .copyWith(appBarTheme: AppBarTheme(color: Colors.purple)))
+        .textTheme;
+    ColorScheme colorScheme = isDark
+        ? ColorScheme.dark()
+        : ColorScheme.light().copyWith(primary: Colors.purple);
     var t = ThemeData.from(
             textTheme: GoogleFonts.montserratTextTheme(txtTheme),
             colorScheme: colorScheme)
         .copyWith(
+            floatingActionButtonTheme: FloatingActionButtonThemeData(
+                backgroundColor:
+                    (isDark) ? Colors.grey.shade900 : Colors.purple,
+                foregroundColor: Colors.white),
             buttonColor: Colors.purple,
             cursorColor: Colors.purple,
             highlightColor: Colors.purple,
@@ -80,26 +89,29 @@ class MyTheme with ChangeNotifier {
 }
 
 class LocalFiles {
-  LocalFiles();
-  Future<bool> writeLocalFile(String data, String dir) async {
+  String content;
+  String dir;
+  LocalFiles({@required this.dir, this.content});
+
+  Future<bool> writeLocalFile() async {
     final String path = (await getApplicationDocumentsDirectory()).path;
-    File('$path/$dir').writeAsString(data);
+    File('$path/${this.dir}').writeAsString(this.content);
     return true;
   }
 
-  Future<String> readcontent(String dir) async {
+  Future<bool> readcontent() async {
     try {
       final String path = (await getApplicationDocumentsDirectory()).path;
-      String contents = await File('$path/$dir').readAsString();
-      return contents;
+      this.content = await File('$path/${this.dir}').readAsString();
+      return true;
     } catch (e) {
-      return null;
+      return false;
     }
   }
 }
 
 class Setting {
-  String apikey = "ef725f20d8e14cb08e487f74ac7cfc13//";
+  String apikey = "ef725f20d8e14cb08e487f74ac7cfc13";
   MyTheme theme;
   Size screenSize;
   int maximumNewsCount;

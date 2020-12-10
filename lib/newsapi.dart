@@ -6,6 +6,7 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:re_netcure/dialogboxes.dart';
 import 'setting.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'dart:math';
 
 class Source {
   String id;
@@ -20,7 +21,7 @@ class Source {
 
 class Articles {
   Source source;
-  int index;
+  bool state = false;
   String author, title, description, url, urlToImage, publishedAt, content;
   CachedNetworkImageProvider image;
   Articles(this.source, this.author, this.title, this.description, this.url,
@@ -45,10 +46,10 @@ class Articles {
 
 class NewsGet {
   bool status;
-  int totalResults;
+  int realTotal = 0;
   List<Articles> articles;
 
-  NewsGet(this.status, this.totalResults, [this.articles]);
+  NewsGet(this.status, [this.articles]);
 
   factory NewsGet.fromJson(dynamic json) {
     bool mystats;
@@ -61,9 +62,9 @@ class NewsGet {
       List<Articles> _tags =
           tagObjsJson.map((tagJson) => Articles.fromJson(tagJson)).toList();
 
-      return NewsGet(mystats, json['totalResults'] as int, _tags);
+      return NewsGet(mystats, _tags);
     } else {
-      return NewsGet(mystats, json['totalResults'] as int);
+      return NewsGet(mystats);
     }
   }
 }
@@ -85,45 +86,42 @@ class _ItemState extends State<Item> {
   Widget build(BuildContext context) {
     if (widget.state && widget.resp != null) {
       myChild = GestureDetector(
-          onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => WebViewScreen(resp: widget.resp)),
-              ),
-          child: Hero(
-            tag: "NEWS_CARD_${widget.resp.index}",
-            child: Container(
-                decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(15),
-                    color: Colors.black,
-                    image: DecorationImage(
-                        image: widget.resp.image,
-                        fit: BoxFit.cover,
-                        colorFilter: ColorFilter.mode(
-                            Colors.black.withOpacity(0.75),
-                            BlendMode.dstATop))),
-                child: Padding(
-                    padding: EdgeInsets.all(15),
-                    child: Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          Text("${widget.resp.title}",
-                              maxLines: 4,
-                              overflow: TextOverflow.fade,
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 22.0,
-                                  fontWeight: FontWeight.bold)),
-                          Text(
-                              "${(widget.resp.author != null) ? widget.resp.author.toUpperCase() : ""}",
-                              overflow: TextOverflow.fade,
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 10.0,
-                                  fontWeight: FontWeight.w300)),
-                        ]))),
-          ));
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (context) => WebViewScreen(resp: widget.resp)),
+        ),
+        child: Container(
+            decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(15),
+                color: Colors.black,
+                image: DecorationImage(
+                    image: widget.resp.image,
+                    fit: BoxFit.cover,
+                    colorFilter: ColorFilter.mode(
+                        Colors.black.withOpacity(0.75), BlendMode.dstATop))),
+            child: Padding(
+                padding: EdgeInsets.all(15),
+                child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text("${widget.resp.title}",
+                          maxLines: 4,
+                          overflow: TextOverflow.fade,
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 22.0,
+                              fontWeight: FontWeight.bold)),
+                      Text(
+                          "${(widget.resp.author != null) ? widget.resp.author.toUpperCase() : ""}",
+                          overflow: TextOverflow.fade,
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10.0,
+                              fontWeight: FontWeight.w300)),
+                    ]))),
+      );
     } else if (widget.state && widget.resp == null) {
       myChild = Container(
           decoration: BoxDecoration(
@@ -175,27 +173,46 @@ class _NewsCards extends State<NewsCards> {
   }
 
   Future<NewsGet> loadNews() async {
-    final http.Response resp = await http.get(
-        "https://newsapi.org/v2/top-headlines?country=id&category=health&apiKey=${setting.apikey}");
-    NewsGet foo = NewsGet.fromJson(jsonDecode(resp.body));
-    for (int a = 0; a <= setting.maximumNewsCountGet();) {
-      final http.Response resp = await http.get(foo.articles[a].urlToImage);
-      if (resp.statusCode == 200) {
-        foo.articles[a].image =
-            CachedNetworkImageProvider(foo.articles[a].urlToImage);
-        if (foo.articles[a].image != null) {
-          foo.articles[a].index = a;
-          cardList.add(
-              Item(key: Key("ITEM_$a"), state: true, resp: foo.articles[a]));
-          a++;
-        } else
-          foo.articles.removeAt(a);
-      } else
-        foo.articles.removeAt(a);
+    LocalFiles myFile = LocalFiles(dir: 'latest.nws');
+    NewsGet foo, forReturn = NewsGet(false, []);
+    if (await myFile.readcontent()) {
+      foo = NewsGet.fromJson(jsonDecode(myFile.content));
+      print('Getting Data OFFLINE SUCCESS\n${myFile.content}');
+    } else {
+      final http.Response resp = await http.get(
+          "https://newsapi.org/v2/top-headlines?country=id&category=health&apiKey=${setting.apikey}");
+      if (resp.statusCode != 200) {
+        print('Getting Data ONLINE FAILED error ${resp.statusCode}');
+        return NewsGet(false, null);
+      }
+      foo = NewsGet.fromJson(jsonDecode(resp.body));
+      myFile.content = resp.body;
+      myFile.writeLocalFile();
+      print('Getting Data ONLINE SUCCESS');
     }
-    foo.articles
-        .removeRange(setting.maximumNewsCountGet(), foo.articles.length);
-    return foo;
+    for (int a = 0; a < foo.articles.length; a++) {
+      int b;
+      do b = Random().nextInt(foo.articles.length); while (
+          foo.articles[b].state);
+      final http.Response resp = await http.get(foo.articles[b].urlToImage);
+      if (resp.statusCode == 200) {
+        forReturn.articles.add(foo.articles[b]);
+        forReturn.articles[a].image =
+            CachedNetworkImageProvider(forReturn.articles[a].urlToImage);
+        forReturn.realTotal++;
+        cardList
+            .add(Item(key: Key("ITEM_$a"), state: true, resp: foo.articles[b]));
+        foo.articles[b].state = true;
+        if (forReturn.realTotal > setting.maximumNewsCountGet()) {
+          break;
+        }
+      }
+    }
+    if (forReturn.realTotal == 0) {
+      return NewsGet(false);
+    } else {
+      return forReturn;
+    }
   }
 
   Widget cardsWidget() {
@@ -260,7 +277,7 @@ class _NewsCards extends State<NewsCards> {
         future: newsList,
         builder: (BuildContext context, ss) {
           if (ss.connectionState == ConnectionState.done && ss.hasData) {
-            if (!hasDataApi) {
+            if (!hasDataApi && ss.data.status && ss.hasData) {
               hasDataApi = true;
             }
             return cardsWidget();
