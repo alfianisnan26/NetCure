@@ -5,7 +5,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:path_provider/path_provider.dart';
 import 'locale.dart';
 import 'package:searchable_dropdown/searchable_dropdown.dart';
-import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 
 class SettingScreen extends StatefulWidget {
   _SettingScreen createState() => _SettingScreen();
@@ -29,24 +28,7 @@ class _SettingScreen extends State<SettingScreen> {
       setting.newsLocale.used = _tempnewsLocale;
       setting.newsLocale.updates = true;
     }
-    /*
-    if (await Config.saveSettings()) {
-      _tempDarkMode = setting.theme.darkMode;
 
-      Scaffold.of(scaffoldContext).showSnackBar(SnackBar(
-        content: Text('Settings saved'),
-      ));
-      if (setting.newsLocale.updates)
-        Scaffold.of(scaffoldContext).showSnackBar(SnackBar(
-          content: Text('You must restart the application'),
-          action: SnackBarAction(
-            label: 'Restart',
-            onPressed: () {},
-          ),
-        ));
-      return true;
-    }
-    */
     Scaffold.of(scaffoldContext).showSnackBar(SnackBar(
       content: Text('Failed to save settings'),
     ));
@@ -55,10 +37,28 @@ class _SettingScreen extends State<SettingScreen> {
 
   Widget menuSetting(String title, Widget child) {
     return Container(
-        height: 50,
+        padding: EdgeInsets.symmetric(horizontal: 10),
+        decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey.withOpacity(0.1), width: 1)),
+        height: 70,
         child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [Text(title), child]));
+  }
+
+  Widget menuSeparator(String text) {
+    return Container(
+        padding: EdgeInsets.symmetric(horizontal: 10),
+        decoration: BoxDecoration(color: Colors.grey.withOpacity(0.1)),
+        width: setting.screenSize.width,
+        height: 15,
+        child: Align(
+            alignment: Alignment.centerLeft,
+            child: Text(text,
+                style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 10,
+                    color: Theme.of(context).primaryColor))));
   }
 
   @override
@@ -85,60 +85,62 @@ class _SettingScreen extends State<SettingScreen> {
           return true;
         },
         child: Scaffold(
-            appBar: AppBar(
-              title: Text("Settings"),
-              actions: [
-                Builder(builder: (context) {
-                  scaffoldContext = context;
-                  return IconButton(
-                      icon: Icon(Icons.check), onPressed: () => saveSetting());
-                })
-              ],
-            ),
-            body: SingleChildScrollView(
-                child: Container(
-              child: SafeArea(
-                  minimum: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: <Widget>[
-                      menuSetting(
-                        'Languange',
-                        Text('DropDown'),
-                      ),
-                      menuSetting('Maximum CureBar Ratio', Text('Slider')),
-                      menuSetting('Minimum CureBar Ratio', Text('Slider')),
-                      menuSetting('News Count', Text('Slider')),
-                      menuSetting('News Update', Text('DropDown')),
-                      menuSetting('Default Notification',
-                          Text('Notification Selector')),
-                      menuSetting(
-                          'Dark Mode',
-                          Switch(
-                            value: setting.theme.darkMode,
-                            onChanged: (val) {
-                              setting.theme.switchTheme(val);
-                              print(
-                                  'Trigger Switch $_tempDarkMode and ${setting.theme.darkMode}');
-                            },
-                          )),
-                      menuSetting(
-                          'News Locale',
-                          SearchableDropdown.single(
-                              iconSize: 24,
-                              closeButton: 'Cancel',
-                              hint: 'Select One',
-                              searchHint: 'Select One',
-                              value: setting.newsLocale.str[_tempnewsLocale],
-                              items: setting.newsLocale.generateList(),
-                              onChanged: (val) {
-                                _tempnewsLocale =
-                                    setting.newsLocale.str.indexOf(val);
-                                print('$val : $_tempnewsLocale');
-                              })),
-                    ],
+          appBar: AppBar(
+            title: Text("Settings"),
+            actions: [
+              Builder(builder: (context) {
+                scaffoldContext = context;
+                return IconButton(
+                    icon: Icon(Icons.check), onPressed: () => saveSetting());
+              })
+            ],
+          ),
+          body: SingleChildScrollView(
+              child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: <Widget>[
+              menuSeparator('GENERAL'),
+              menuSetting(
+                'Languange',
+                Text('DropDown'),
+              ),
+              menuSetting(
+                  'Default Notification', Text('Notification Selector')),
+              menuSeparator('DISPLAY'),
+              menuSetting(
+                  'Dark Mode',
+                  Switch(
+                    value: setting.theme.darkMode,
+                    onChanged: (val) {
+                      setting.theme.switchTheme(val);
+                      print(
+                          'Trigger Switch $_tempDarkMode and ${setting.theme.darkMode}');
+                    },
                   )),
-            ))));
+              menuSetting('Maximum CureBar Ratio', Text('Slider')),
+              menuSetting('Minimum CureBar Ratio', Text('Slider')),
+              menuSeparator('NEWS UPDATE'),
+              menuSetting('News Count', Text('Slider')),
+              menuSetting('Update Schedule', Text('DropDown')),
+              menuSetting(
+                  'News Locale',
+                  Container(
+                      child: SearchableDropdown.single(
+                          displayClearIcon: false,
+                          iconSize: 24,
+                          closeButton: 'Cancel',
+                          hint: 'Select One',
+                          searchHint: 'Select One',
+                          value: setting.newsLocale.str[_tempnewsLocale],
+                          items: setting.newsLocale.generateList(),
+                          onChanged: (val) {
+                            _tempnewsLocale =
+                                setting.newsLocale.str.indexOf(val);
+                            print('$val : $_tempnewsLocale');
+                          }))),
+            ],
+          )),
+        ));
   }
 }
 

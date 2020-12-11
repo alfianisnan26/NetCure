@@ -15,44 +15,120 @@ class CardItem {
   var color;
   Widget smallWidget;
   Widget bigWidget;
-  CardItem(this.onTap, this.color, this.smallWidget, this.bigWidget);
+  Widget expandedWidget;
+  CardItem(this.onTap, this.color, this.smallWidget, this.bigWidget,
+      this.expandedWidget);
 }
+
+class SmallCardExpanded extends StatefulWidget {
+  final CardItem myCards;
+  final int index;
+  SmallCardExpanded({Key key, this.myCards, this.index}) : super(key: key);
+  @override
+  _SmallCardExpanded createState() => _SmallCardExpanded();
+}
+
+class _SmallCardExpanded extends State<SmallCardExpanded> {
+  bool expanded = false, toExpand = false;
+  final double expandedWidth = setting.screenSize.width;
+  final double width =
+      (setting.screenSize.height * setting.ratioDrawerMinHeightGet() - 40);
+
+  @override
+  void setState(fn) {
+    if (mounted) {
+      super.setState(fn);
+    }
+  }
+
+  @override
+  void initState() {
+    _scsv.addListener(() {
+      if (_scsv.position.isScrollingNotifier.value && toExpand) {
+        setState(() {
+          expanded = false;
+        });
+        toExpand = false;
+      }
+    });
+    super.initState();
+  }
+
+  void scrollAnimate() async {
+    setState(() {
+      expanded = true;
+    });
+    await Future.delayed(Duration(milliseconds: 125));
+    print('${widget.index}');
+    await _scsv.position.animateTo((widget.index * width),
+        duration: Duration(milliseconds: 125), curve: Curves.fastOutSlowIn);
+    print('Expanded = $expanded of ${widget.key.toString()}');
+    print('_scsv ${_scsv.position.pixels}');
+    toExpand = true;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+        onTap: () {
+          if (!expanded) {
+            scrollAnimate();
+          } else {
+            widget.myCards.onTap();
+          }
+        },
+        child: AnimatedContainer(
+            padding: EdgeInsets.symmetric(vertical: 2),
+            width: (expanded) ? expandedWidth : width,
+            duration: Duration(milliseconds: 125),
+            child: Card(
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(10))),
+              color: widget.myCards.color,
+              child: widget.myCards.smallWidget,
+            )));
+  }
+}
+
+ScrollController _scsv = ScrollController();
 
 class CardClass {
   List<Widget> cardBig, cardSmall;
   List<CardItem> myCards;
   bool canBig = false;
-  CardClass(this.myCards, this.canBig) {
-    if (myCards != null) renderCards();
+  CardClass(this.myCards, this.canBig, {String key = ""}) {
+    if (myCards != null) renderCards(key);
   }
 
-  void dumpGenerate(bool canBig, int length, Function func, var color) {
+  void dumpGenerate(
+      bool canBig, int length, Function func, var color, String key) {
     this.canBig = canBig;
     this.myCards = List.generate(length, (index) {
       return CardItem(
-          func,
-          color,
-          Center(child: Text('${index + 1}', style: TextStyle(fontSize: 20))),
-          Center(
-              child: Text(
+        func,
+        color,
+        Center(child: Text('${index + 1}', style: TextStyle(fontSize: 20))),
+        Center(
+          child: Text(
             '${index + 1}',
             style: TextStyle(fontSize: 30),
-          )));
+          ),
+        ),
+        Center(
+            child:
+                Text('This Is ${index + 1}', style: TextStyle(fontSize: 20))),
+      );
     });
-    renderCards();
+    renderCards(key);
   }
 
-  void renderCards() {
+  void renderCards(String key) {
     cardSmall = List.generate(myCards.length, (index) {
-      return Container(
-          child: GestureDetector(
-              onTap: myCards[index].onTap,
-              child: Card(
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(10))),
-                color: myCards[index].color,
-                child: myCards[index].smallWidget,
-              )));
+      return new SmallCardExpanded(
+        index: index,
+        key: Key('$key SmallCard_$index'),
+        myCards: myCards[index],
+      );
     });
     if (!canBig) return;
     cardBig = List.generate(myCards.length, (index) {
@@ -71,11 +147,19 @@ class CardClass {
   Widget cardsGrid(bool isbig, Axis myAxis, int crossAxis, double size) {
     return Container(
       height: size,
-      child: GridView.count(
-          scrollDirection: myAxis,
-          padding: EdgeInsets.all(5),
-          crossAxisCount: crossAxis,
-          children: (isbig) ? cardBig : cardSmall),
+      child: (!isbig)
+          ? SingleChildScrollView(
+              controller: _scsv,
+              scrollDirection: myAxis,
+              child: Row(
+                children: cardSmall,
+              ),
+            )
+          : GridView.count(
+              scrollDirection: myAxis,
+              padding: EdgeInsets.all(5),
+              crossAxisCount: crossAxis,
+              children: (isbig) ? cardBig : cardSmall),
     );
   }
 }
@@ -96,6 +180,7 @@ class _TabBar extends State<GenerateTabBar>
       cardLogs = CardClass(null, true);
 
   TabController _controller;
+  int currentClicked = 0;
 
   @override
   void initState() {
@@ -104,17 +189,20 @@ class _TabBar extends State<GenerateTabBar>
         true,
         25,
         () => dialogBox.ackAlert(currentContext, 'Trial', 'Routines'),
-        Colors.green);
+        Colors.green,
+        "Routine");
     cardEmergency.dumpGenerate(
         false,
         10,
         () => dialogBox.ackAlert(currentContext, 'Trial', 'Emergency'),
-        Colors.red);
+        Colors.red,
+        "Emergency");
     cardLogs.dumpGenerate(
         true,
         30,
         () => dialogBox.ackAlert(currentContext, 'Trial', 'Logs'),
-        Colors.yellow);
+        Colors.yellow,
+        "Logs");
     _controller = TabController(length: 3, vsync: this);
     _controller.addListener(() {
       setState(() {
