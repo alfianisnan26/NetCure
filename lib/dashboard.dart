@@ -81,17 +81,19 @@ class CardClass {
 }
 
 class GenerateTabBar extends StatefulWidget {
-  final bool state;
+  final bool state, mapState;
   final double ecp;
   final double stack;
-  GenerateTabBar({Key key, this.stack, this.state, this.ecp}) : super(key: key);
+  GenerateTabBar({Key key, this.stack, this.state, this.ecp, this.mapState})
+      : super(key: key);
   _TabBar createState() => _TabBar();
 }
 
 class _TabBar extends State<GenerateTabBar>
     with SingleTickerProviderStateMixin {
   CardClass cardRoutines = CardClass(null, true),
-      cardEmergency = CardClass(null, false);
+      cardEmergency = CardClass(null, false),
+      cardLogs = CardClass(null, true);
 
   TabController _controller;
 
@@ -108,6 +110,11 @@ class _TabBar extends State<GenerateTabBar>
         10,
         () => dialogBox.ackAlert(currentContext, 'Trial', 'Emergency'),
         Colors.red);
+    cardLogs.dumpGenerate(
+        true,
+        30,
+        () => dialogBox.ackAlert(currentContext, 'Trial', 'Logs'),
+        Colors.yellow);
     _controller = TabController(length: 3, vsync: this);
     _controller.addListener(() {
       setState(() {
@@ -184,7 +191,8 @@ class _TabBar extends State<GenerateTabBar>
                                             setting.ratioDrawerMinHeightGet() -
                                         40) -
                                     0.5,
-                                child: maps.MapNew()),
+                                child:
+                                    (widget.mapState) ? maps.MapNew() : null),
                             Padding(
                                 padding: EdgeInsets.only(top: widget.ecp),
                                 child: Container(
@@ -192,7 +200,7 @@ class _TabBar extends State<GenerateTabBar>
                                             setting.ratioDrawerMinHeightGet() -
                                         40,
                                     color: (setting.theme.darkMode)
-                                        ? Colors.black87
+                                        ? Colors.grey.shade900
                                         : Colors.white,
                                     child: cardEmergency.cardsGrid(
                                       false,
@@ -202,13 +210,22 @@ class _TabBar extends State<GenerateTabBar>
                                     ))),
                           ],
                         )),
-                        Container(
-                          child: Center(
-                            child: Text('Display Tab 3',
-                                style: TextStyle(
-                                    fontSize: 22, fontWeight: FontWeight.bold)),
-                          ),
-                        ),
+                        Opacity(
+                            opacity: widget.stack,
+                            child: Stack(children: [
+                              cardLogs.cardsGrid(
+                                  widget.state,
+                                  (widget.state)
+                                      ? Axis.vertical
+                                      : Axis.horizontal,
+                                  (widget.state) ? setting.drawerRowGet() : 1,
+                                  (widget.state)
+                                      ? null
+                                      : (setting.screenSize.height *
+                                              setting
+                                                  .ratioDrawerMinHeightGet() -
+                                          40))
+                            ])),
                       ]))
                 ])));
   }
@@ -235,14 +252,36 @@ class SlideBar {
             )));
   }
 
+  bool curState = false;
+  double curVal;
+
   void close() {
+    curState = false;
     this.blurr = _blurLayer(false, 0);
-    this.value = GenerateTabBar(stack: 1, state: false);
+    this.value = GenerateTabBar(
+      stack: 1,
+      state: false,
+      ecp: 0,
+      mapState: curState,
+    );
+  }
+
+  void open() {
+    curState = true;
+    this.value = GenerateTabBar(
+      stack: 1,
+      state: true,
+      ecp: curVal,
+      mapState: curState,
+    );
   }
 
   void set(double val) {
     bool state;
     this.blurr = _blurLayer(true, val * 5);
+    curVal = val *
+        ((setting.screenSize.height * setting.ratioDrawerMaxHeightGet()) -
+            (setting.screenSize.height * setting.ratioDrawerMinHeightGet()));
     if (val >= 0.5) {
       val = (val - 0.5) * 2;
       state = true;
@@ -251,12 +290,7 @@ class SlideBar {
       state = false;
     }
     this.value = GenerateTabBar(
-        state: state,
-        stack: val,
-        ecp: val *
-            ((setting.screenSize.height * setting.ratioDrawerMaxHeightGet()) -
-                (setting.screenSize.height *
-                    setting.ratioDrawerMinHeightGet())));
+        mapState: curState, state: state, stack: val, ecp: curVal);
   }
 }
 
@@ -365,9 +399,12 @@ class _Dashboard extends State<Dashboard> with SingleTickerProviderStateMixin {
                   });
                 },
                 onPanelClosed: () {
-                  setState(() {
-                    slideBar.close();
-                  });
+                  slideBar.close();
+                  print('isClosed');
+                },
+                onPanelOpened: () {
+                  slideBar.open();
+                  print('isOpen');
                 },
                 parallaxEnabled: true,
                 backdropEnabled: true,

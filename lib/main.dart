@@ -1,22 +1,31 @@
+//import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dashboard.dart' as dashboard;
 import 'setting.dart';
 
-void main() => runApp(OpenClass());
+void main() {
+  runApp(OpenClass());
+}
 
 class OpenClass extends StatefulWidget {
   _OpenClass createState() => _OpenClass();
 }
 
 class _OpenClass extends State<OpenClass> {
-  @override
-  void initState() {
-    super.initState();
-    setting.init();
+  initialize() async {
+    setting.theme = MyTheme();
+    //await Config.initSetting();
+    print('Load Setting Complete');
     setting.theme.addListener(() {
       setState(() {});
     });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    initialize();
   }
 
   @override
@@ -214,7 +223,7 @@ class _Login extends State<NetCureLogin> {
                                     shape: RoundedRectangleBorder(
                                         borderRadius:
                                             BorderRadius.circular(50)),
-                                    textColor: Colors.white,
+                                    textColor: Colors.black,
                                     color: Color.fromRGBO(99, 219, 167, 1),
                                     child: Text('Sign Up'),
                                     onPressed: () {
@@ -230,7 +239,7 @@ class _Login extends State<NetCureLogin> {
                                     shape: RoundedRectangleBorder(
                                         borderRadius:
                                             BorderRadius.circular(50)),
-                                    textColor: Colors.white,
+                                    textColor: Colors.black,
                                     color: Color.fromRGBO(155, 246, 161, 1),
                                     child: Text('Login'),
                                     onPressed: () {
@@ -250,7 +259,11 @@ class _Login extends State<NetCureLogin> {
                       textColor: Colors.black,
                       child: Text(
                         'Forgot Password',
-                        style: TextStyle(fontSize: 12),
+                        style: TextStyle(
+                            fontSize: 12,
+                            color: (setting.theme.darkMode)
+                                ? Colors.white
+                                : Colors.black),
                       ),
                     ),
                     SizedBox(

@@ -1,3 +1,5 @@
+import 'dart:math';
+import 'package:transparent_image/transparent_image.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -5,8 +7,6 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:re_netcure/dialogboxes.dart';
 import 'setting.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'dart:math';
 
 class Source {
   String id;
@@ -23,7 +23,6 @@ class Articles {
   Source source;
   bool state = false;
   String author, title, description, url, urlToImage, publishedAt, content;
-  CachedNetworkImageProvider image;
   Articles(this.source, this.author, this.title, this.description, this.url,
       this.urlToImage, this.publishedAt, this.content);
   factory Articles.fromJson(dynamic json) {
@@ -36,11 +35,6 @@ class Articles {
         json['urlToImage'] as String,
         json['publishedAt'] as String,
         json['content'] as String);
-  }
-
-  @override
-  String toString() {
-    return '{ ${this.source}, ${this.author}, ${this.title}, ${this.description}, ${this.url}, ${this.urlToImage}, ${this.publishedAt}, ${this.content}';
   }
 }
 
@@ -72,7 +66,7 @@ class NewsGet {
 // ignore: must_be_immutable
 class Item extends StatefulWidget {
   final Articles resp;
-  bool state;
+  bool state = false;
   Item({Key key, @required this.state, this.resp}) : super(key: key);
 
   @override
@@ -91,36 +85,48 @@ class _ItemState extends State<Item> {
           MaterialPageRoute(
               builder: (context) => WebViewScreen(resp: widget.resp)),
         ),
-        child: Container(
-            decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(15),
-                color: Colors.black,
-                image: DecorationImage(
-                    image: widget.resp.image,
-                    fit: BoxFit.cover,
-                    colorFilter: ColorFilter.mode(
-                        Colors.black.withOpacity(0.75), BlendMode.dstATop))),
-            child: Padding(
-                padding: EdgeInsets.all(15),
-                child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Text("${widget.resp.title}",
-                          maxLines: 4,
-                          overflow: TextOverflow.fade,
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 22.0,
-                              fontWeight: FontWeight.bold)),
-                      Text(
-                          "${(widget.resp.author != null) ? widget.resp.author.toUpperCase() : ""}",
-                          overflow: TextOverflow.fade,
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 10.0,
-                              fontWeight: FontWeight.w300)),
-                    ]))),
+        child: Stack(alignment: Alignment.center, children: [
+          ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.grey,
+                    image: DecorationImage(
+                        image: AssetImage('assets/images/pillsBW.jpg'),
+                        fit: BoxFit.cover),
+                  ),
+                  child: ColorFiltered(
+                      colorFilter: ColorFilter.mode(
+                          Colors.black.withOpacity(0.5), BlendMode.darken),
+                      child: FadeInImage.memoryNetwork(
+                          height: 200,
+                          width: 200 / 9 * 16,
+                          alignment: Alignment.center,
+                          fit: BoxFit.cover,
+                          placeholder: kTransparentImage,
+                          image: widget.resp.urlToImage)))),
+          Padding(
+              padding: EdgeInsets.all(15),
+              child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text("${widget.resp.title}",
+                        maxLines: 4,
+                        overflow: TextOverflow.fade,
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 22.0,
+                            fontWeight: FontWeight.bold)),
+                    Text(
+                        "${(widget.resp.author != null) ? widget.resp.author.toUpperCase() : ""}",
+                        overflow: TextOverflow.fade,
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 10.0,
+                            fontWeight: FontWeight.w300)),
+                  ]))
+        ]),
       );
     } else if (widget.state && widget.resp == null) {
       myChild = Container(
@@ -172,42 +178,62 @@ class _NewsCards extends State<NewsCards> {
     return result;
   }
 
+  NewsGet checkNews(NewsGet a) {
+    print('Total Articles ${a.articles.length}');
+    a.articles.removeWhere((element) => (element.content == null));
+    print('Total Articles Registered ${a.articles.length}');
+    return a;
+  }
+
+  Future<bool> saveNews(NewsGet a, LocalFiles file) {
+    print('SaveNews');
+    file.content = jsonEncode(a);
+    print('Save Success');
+    return file.writeLocalFile();
+  }
+
+  NewsGet generateNews(NewsGet foo) {
+    NewsGet forReturn = NewsGet(true, []);
+    for (int a = 0; a < foo.articles.length; a++) {
+      print('Article Load at $a');
+      if (cardList.length >= setting.maximumNewsCountGet()) {
+        print('Maximum News Count Triggered');
+        break;
+      }
+      int b;
+      do {
+        b = Random().nextInt(foo.articles.length);
+        print('Article rand at $b state: ${foo.articles[b].state}');
+      } while (foo.articles[b].state);
+      foo.articles[b].state = true;
+      print('Add Articles Index $a of ${cardList.length} available at $b');
+      forReturn.articles.add(foo.articles[b]);
+      cardList
+          .add(Item(key: Key("ITEM_$a"), state: true, resp: foo.articles[b]));
+      print('Add new Cards');
+    }
+    return forReturn;
+  }
+
   Future<NewsGet> loadNews() async {
     LocalFiles myFile = LocalFiles(dir: 'latest.nws');
     NewsGet foo, forReturn = NewsGet(false, []);
-    if (await myFile.readcontent()) {
-      foo = NewsGet.fromJson(jsonDecode(myFile.content));
-      print('Getting Data OFFLINE SUCCESS\n${myFile.content}');
-    } else {
-      final http.Response resp = await http.get(
-          "https://newsapi.org/v2/top-headlines?country=id&category=health&apiKey=${setting.apikey}");
+
+    if (!await myFile.readcontent() || setting.newsLocale.updates) {
+      final http.Response resp = await http.get(setting.newsLocale.link);
       if (resp.statusCode != 200) {
-        print('Getting Data ONLINE FAILED error ${resp.statusCode}');
+        print(
+            'Getting Data ONLINE FAILED error ${resp.statusCode} from ${setting.newsLocale.link}');
         return NewsGet(false, null);
       }
-      foo = NewsGet.fromJson(jsonDecode(resp.body));
-      myFile.content = resp.body;
-      myFile.writeLocalFile();
-      print('Getting Data ONLINE SUCCESS');
+      foo = checkNews(NewsGet.fromJson(jsonDecode(resp.body)));
+      print('Getting Data ONLINE SUCCESS from ${setting.newsLocale.link}');
+      setting.newsLocale.updates = !await saveNews(foo, myFile);
+    } else {
+      foo = NewsGet.fromJson(jsonDecode(myFile.content));
+      print('Getting Data OFFLINE SUCCESS\n');
     }
-    for (int a = 0; a < foo.articles.length; a++) {
-      int b;
-      do b = Random().nextInt(foo.articles.length); while (
-          foo.articles[b].state);
-      final http.Response resp = await http.get(foo.articles[b].urlToImage);
-      if (resp.statusCode == 200) {
-        forReturn.articles.add(foo.articles[b]);
-        forReturn.articles[a].image =
-            CachedNetworkImageProvider(forReturn.articles[a].urlToImage);
-        forReturn.realTotal++;
-        cardList
-            .add(Item(key: Key("ITEM_$a"), state: true, resp: foo.articles[b]));
-        foo.articles[b].state = true;
-        if (forReturn.realTotal > setting.maximumNewsCountGet()) {
-          break;
-        }
-      }
-    }
+    forReturn = generateNews(foo);
     if (forReturn.realTotal == 0) {
       return NewsGet(false);
     } else {
