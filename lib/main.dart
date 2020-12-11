@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:re_netcure/registrationpage.dart';
 import 'package:connectivity/connectivity.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -36,6 +37,7 @@ class _OpenClass extends State<OpenClass> {
       routes: {
         '/': (context) => NetCure(),
         '/Login': (context) => NetCureLogin(),
+        '/RegistrationPage': (context) => RegistrationPage(),
         '/Dashboard': (context) => dashboard.Dashboard(),
         '/Dashboard/Settings': (context) => SettingScreen()
       },
@@ -124,12 +126,13 @@ class _Login extends State<NetCureLogin> {
   }
 
   login() async {
-
     //show waiting dialog
     showDialog(
       barrierDismissible: false,
       context: context,
-      builder: (BuildContext context) => ProgressDialog('logging in',),
+      builder: (BuildContext context) => ProgressDialog(
+        'logging in',
+      ),
     );
 
     final UserCredential userCredential = (await _auth
@@ -202,44 +205,40 @@ class _Login extends State<NetCureLogin> {
                     SizedBox(height: 20),
                     Container(
                         child: Column(children: [
-                      Row(children: [
-                        SizedBox(
-                          width: 40,
-                        ),
-                        Text("Email",
-                            textAlign: TextAlign.left,
-                            style: TextStyle(fontSize: 10)),
-                      ]),
-                      Container(
-                        height: 50,
-                        padding: EdgeInsets.symmetric(horizontal: 40),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 40.0, right: 40),
                         child: TextField(
-                          textAlign: TextAlign.center,
                           controller: emailController,
                           decoration: InputDecoration(
-                            isDense: true,
-                          ),
+                              labelText: 'Email',
+                              labelStyle: TextStyle(
+                                fontSize: 16.0,
+                              ),
+                              hintStyle:
+                                  TextStyle(color: Colors.grey, fontSize: 10.0)),
+                          style: TextStyle(fontSize: 16),
                         ),
                       ),
-                      Row(children: [
-                        SizedBox(
-                          width: 40,
-                        ),
-                        Text("Password",
-                            textAlign: TextAlign.left,
-                            style: TextStyle(fontSize: 10)),
-                      ]),
-                      Container(
-                        height: 40,
-                        padding: EdgeInsets.symmetric(horizontal: 40),
+                      SizedBox(
+                        height: 10,
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 40.0, right: 40),
                         child: TextField(
                           obscureText: true,
-                          textAlign: TextAlign.center,
                           controller: passwordController,
                           decoration: InputDecoration(
-                            isDense: true,
-                          ),
+                              labelText: 'Password',
+                              labelStyle: TextStyle(
+                                fontSize: 16.0,
+                              ),
+                              hintStyle:
+                                  TextStyle(color: Colors.grey, fontSize: 10.0)),
+                          style: TextStyle(fontSize: 16),
                         ),
+                      ),
+                      SizedBox(
+                        height: 40,
                       ),
                       SizedBox(
                           height: 50,

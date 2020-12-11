@@ -102,11 +102,11 @@ class _RegistrationPageState extends State<RegistrationPage> {
                         decoration: InputDecoration(
                             labelText: 'Full Name',
                             labelStyle: TextStyle(
-                              fontSize: 14.0,
+                              fontSize: 16.0,
                             ),
                             hintStyle:
-                                TextStyle(color: Colors.grey, fontSize: 10.0)),
-                        style: TextStyle(fontSize: 14),
+                                TextStyle(color: Colors.grey, fontSize: 10)),
+                        style: TextStyle(fontSize: 16),
                       ),
 
                       SizedBox(
@@ -120,11 +120,11 @@ class _RegistrationPageState extends State<RegistrationPage> {
                         decoration: InputDecoration(
                             labelText: 'Email address',
                             labelStyle: TextStyle(
-                              fontSize: 14.0,
+                              fontSize: 16.0,
                             ),
                             hintStyle:
                                 TextStyle(color: Colors.grey, fontSize: 10.0)),
-                        style: TextStyle(fontSize: 14),
+                        style: TextStyle(fontSize: 16),
                       ),
 
                       SizedBox(
@@ -138,11 +138,11 @@ class _RegistrationPageState extends State<RegistrationPage> {
                         decoration: InputDecoration(
                             labelText: 'Phone Number',
                             labelStyle: TextStyle(
-                              fontSize: 14.0,
+                              fontSize: 16.0,
                             ),
                             hintStyle:
                                 TextStyle(color: Colors.grey, fontSize: 10.0)),
-                        style: TextStyle(fontSize: 14),
+                        style: TextStyle(fontSize: 16),
                       ),
 
                       SizedBox(
@@ -156,14 +156,14 @@ class _RegistrationPageState extends State<RegistrationPage> {
                         decoration: InputDecoration(
                           labelText: 'Password',
                           labelStyle: TextStyle(
-                            fontSize: 14.0,
+                            fontSize: 16.0,
                           ),
                           hintStyle: TextStyle(
                             color: Colors.grey,
                             fontSize: 10.0,
                           ),
                         ),
-                        style: TextStyle(fontSize: 14),
+                        style: TextStyle(fontSize: 16),
                       ),
 
                       SizedBox(
