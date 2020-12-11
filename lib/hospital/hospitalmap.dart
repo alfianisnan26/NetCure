@@ -1,11 +1,24 @@
 import 'dart:io';
 import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class MapNew extends StatefulWidget {
+  final GeoPoint geoPoint;
+  final String name;
+  final String distance;
+
+  // TodosScreen({Key key, @required this.todos}) : super(key: key);
+  MapNew(
+      {Key key,
+      @required this.geoPoint,
+      @required this.name,
+      @required this.distance})
+      : super(key: key);
+
   @override
   _MapNewState createState() => _MapNewState();
 }
@@ -48,15 +61,18 @@ class _MapNewState extends State<MapNew> {
   Widget build(BuildContext context) {
     Marker omniHospital = Marker(
       markerId: MarkerId('destination'),
-      position: LatLng(-6.17602, 106.88445),
+      //position: LatLng(-6.17602,106.88445),
+      position: LatLng(widget.geoPoint.latitude, widget.geoPoint.longitude),
       icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
-      infoWindow: InfoWindow(title: 'RS Omni Pulomas', snippet: '4,7 km'),
+      //infoWindow: InfoWindow(title: 'RS Omni Pulomas', snippet: '4,7 km'),
+      infoWindow:
+          InfoWindow(title: '${widget.name}', snippet: '${widget.distance}'),
     );
 
     return Scaffold(
       body: Stack(children: <Widget>[
         GoogleMap(
-            padding: EdgeInsets.only(top: mapTopPadding),
+            padding: EdgeInsets.only(top: 40.0, bottom: 100.0),
             mapType: MapType.normal,
             myLocationButtonEnabled: true,
             markers: _markers,
@@ -73,23 +89,27 @@ class _MapNewState extends State<MapNew> {
               //function to get current location
               setupPositionLocator();
             }),
-
-          Padding(
-            padding: const EdgeInsets.only(top: 18.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Column(
+              mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                FloatingActionButton.extended(
-                  onPressed: () {
-                    launchDialer('tel: +6229779999');
-                  },
-                  label: Text("Dial"),
-                  icon: Icon(Icons.phone),
-                  backgroundColor: Colors.green[300],
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 28.0),
+                  child: FloatingActionButton.extended(
+                    onPressed: () {
+                      launchDialer('tel: +6229779999');
+                    },
+                    label: Text("Dial"),
+                    icon: Icon(Icons.phone),
+                    backgroundColor: Color.fromRGBO(99, 219, 167, 1),
+                  ),
                 ),
               ],
             ),
-          ),
+          ],
+        ),
       ]),
     );
   }

@@ -77,15 +77,11 @@ class MyTheme with ChangeNotifier {
 }
 
 class LangAndNews {
-  LangAndNews(String newsLocale, String langLocale) {}
+  LangAndNews(String newsLocale, String langLocale);
 }
 
 class Setting {
-<<<<<<< HEAD
-  String apikey = "1771d36eeb9b4cbca1c4e5560722f43b";
-=======
-  String apikey = "cbf23a5f9b254b8992d5c0f9e2b9b6d3";
->>>>>>> 5df89dafb086f713aca5eff97fada6f12d9dfabe
+  String apikey = "e5204cd40bc34e918172440c8670cda9";
   LangAndNews langnews;
   MyTheme theme;
   Size screenSize;

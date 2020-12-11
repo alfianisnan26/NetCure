@@ -43,7 +43,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
       password: passwordController.text,
     )
         .catchError((ex) {
-      ;
+  
       // check error and display messages
       PlatformException thisEx = ex;
       showSnackBar(thisEx.message);
