@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'package:re_netcure/dialogboxes.dart';
+import 'package:NetCure/dialogboxes.dart';
 import 'setting.dart';
 
 class Source {
@@ -249,7 +249,7 @@ class _NewsCards extends State<NewsCards> {
           CarouselSlider(
             height: 200.0,
             autoPlay: setting.autoPlayGet(),
-            autoPlayInterval: setting.autoPlayTimeGet(),
+            autoPlayInterval: Duration(seconds: setting.autoPlayTimeGet()),
             autoPlayAnimationDuration: Duration(milliseconds: 800),
             autoPlayCurve: Curves.fastOutSlowIn,
             pauseAutoPlayOnTouch: Duration(seconds: 10),

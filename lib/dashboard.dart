@@ -2,8 +2,8 @@ import 'dart:ui';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
-import 'package:re_netcure/hospitalmap.dart' as maps;
-//import 'maps.dart' as maps;
+import 'package:NetCure/hospitalmap.dart';
+import 'package:NetCure/hospital/hospitallist.dart' as maps;
 import 'newsapi.dart';
 import 'setting.dart';
 import 'dialogboxes.dart' as dialogBox;
@@ -279,8 +279,9 @@ class _TabBar extends State<GenerateTabBar>
                                             setting.ratioDrawerMinHeightGet() -
                                         40) -
                                     0.5,
-                                child:
-                                    (widget.mapState) ? maps.MapNew() : null),
+                                child: (widget.mapState)
+                                    ? maps.HospitalList()
+                                    : null),
                             Padding(
                                 padding: EdgeInsets.only(top: widget.ecp),
                                 child: Container(

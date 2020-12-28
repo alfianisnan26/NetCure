@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 
 class NewsLocale {
-  /*
   NewsLocale({this.updates = true, this.used = 0});
   factory NewsLocale.fromJson(dynamic json) {
     return NewsLocale(
         updates: json['updates'] as bool, used: json['used'] as int);
   }
-  */
+  Map<String, dynamic> toJson() =>
+      {"\"updates\"": this.updates, "\"used\"": this.used};
+
   bool updates = false;
   String _links = "https://newsapi.org/v2/top-headlines";
   String _apikey = "ef725f20d8e14cb08e487f74ac7cfc13";

@@ -1,5 +1,6 @@
-//import 'dart:convert';
+import 'dart:convert';
 import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:path_provider/path_provider.dart';
@@ -14,7 +15,7 @@ class _SettingScreen extends State<SettingScreen> {
   BuildContext scaffoldContext;
   bool _tempDarkMode;
   int _tempnewsLocale;
-
+  bool changes = false;
   @override
   void initState() {
     super.initState();
@@ -24,9 +25,23 @@ class _SettingScreen extends State<SettingScreen> {
   }
 
   Future<bool> saveSetting() async {
-    if (setting.newsLocale.used != _tempnewsLocale) {
+    if (await Setting(
+            maximumNewsCount: setting.maximumNewsCount,
+            drawerRow: setting.drawerRow,
+            autoPlay: setting.autoPlay,
+            autoPlayTime: setting.autoPlayTime,
+            theme: MyTheme(darkMode: setting.theme.darkMode),
+            newsLocale: NewsLocale(
+                updates:
+                    (setting.newsLocale.used != _tempnewsLocale) ? true : false,
+                used: _tempnewsLocale))
+        .saveSetting()) {
+      Scaffold.of(scaffoldContext).showSnackBar(SnackBar(
+        content: Text('Setting Saved'),
+      ));
+      _tempDarkMode = setting.theme.darkMode;
       setting.newsLocale.used = _tempnewsLocale;
-      setting.newsLocale.updates = true;
+      return true;
     }
 
     Scaffold.of(scaffoldContext).showSnackBar(SnackBar(
@@ -65,7 +80,6 @@ class _SettingScreen extends State<SettingScreen> {
   Widget build(BuildContext context) {
     return WillPopScope(
         onWillPop: () async {
-          bool changes = false;
           if (_tempDarkMode != setting.theme.darkMode) changes = true;
           if (_tempnewsLocale != setting.newsLocale.used) changes = true;
           if (changes) {
@@ -91,7 +105,10 @@ class _SettingScreen extends State<SettingScreen> {
               Builder(builder: (context) {
                 scaffoldContext = context;
                 return IconButton(
-                    icon: Icon(Icons.check), onPressed: () => saveSetting());
+                    icon: Icon(Icons.check),
+                    onPressed: () async {
+                      if (await saveSetting()) changes = false;
+                    });
               })
             ],
           ),
@@ -148,11 +165,13 @@ class MyTheme with ChangeNotifier {
   bool darkMode = false;
 
   MyTheme({this.darkMode = false});
-/*
+
   factory MyTheme.fromJson(dynamic json) {
     return MyTheme(darkMode: json['darkMode'] as bool);
   }
-*/
+
+  Map<String, dynamic> toJson() => {'\"darkMode\"': this.darkMode};
+
   ThemeMode currentTheme() {
     return darkMode ? ThemeMode.dark : ThemeMode.light;
   }
@@ -217,22 +236,65 @@ class LocalFiles {
 }
 
 class Setting {
+  LocalFiles config = LocalFiles(dir: 'config.conf');
   MyTheme theme;
   Size screenSize;
   int maximumNewsCount;
   int drawerRow;
   bool autoPlay;
-  Duration autoPlayTime;
-  NewsLocale newsLocale = NewsLocale();
+  int autoPlayTime;
+  NewsLocale newsLocale;
   double ratioDrawerMaxHeight, ratioDrawerMinHeight;
-  /*
-  Setting({this.newsLocale, this.theme});
-  factory Setting.fromJson(dynamic json) {
-    return Setting(
-        theme: MyTheme.fromJson(json['MyTheme']),
-        newsLocale: NewsLocale.fromJson(json['NewsLocale']));
+  bool thisTrue;
+  bool loggedIn;
+
+  Setting(
+      {this.maximumNewsCount = 5,
+      this.drawerRow = 3,
+      this.autoPlay = true,
+      this.autoPlayTime = 5,
+      this.theme,
+      this.newsLocale,
+      this.thisTrue = false});
+
+  Setting.fromJson(Map<String, dynamic> json)
+      : this.maximumNewsCount = json['MaximumNewsCount'],
+        this.drawerRow = json['drawerRow'],
+        this.autoPlay = json['autoPlay'],
+        this.autoPlayTime = json['autoPlayTime'],
+        this.theme = MyTheme.fromJson(json['MysTheme']),
+        this.newsLocale = NewsLocale.fromJson(json['NewsLocale']),
+        this.thisTrue = json['ThisTrue'];
+
+  Map<String, dynamic> toJson() => {
+        "\"maximumNewsCount\"": this.maximumNewsCount,
+        "\"drawerRow\"": this.drawerRow,
+        "\"autoPlay\"": this.autoPlay,
+        "\"autoPlayTime\"": this.autoPlayTime,
+        "\"MyTheme\"": this.theme.toJson(),
+        "\"NewsLocale\"": this.newsLocale.toJson(),
+        "\"ThisTrue\"": true,
+      };
+
+  Future<Setting> loadSetting() async {
+    if (await config.readcontent()) {
+      Setting dump = Setting.fromJson(jsonDecode(config.content));
+      if (this.thisTrue != null) {
+        print('Load Setting Success value :${config.content}');
+        return dump;
+      }
+    }
+    return null;
   }
-  */
+
+  Future<bool> saveSetting() async {
+    config.content = this.toJson().toString();
+    if (await config.writeLocalFile()) {
+      print('Save Setting Success value :${config.content}');
+      return true;
+    }
+    return false;
+  }
 
   double ratioDrawerMaxHeightGet() {
     if (ratioDrawerMaxHeight == null) return 0.8;
@@ -257,8 +319,8 @@ class Setting {
     return this.autoPlay;
   }
 
-  Duration autoPlayTimeGet() {
-    if (autoPlayTime == null) return Duration(seconds: 5);
+  int autoPlayTimeGet() {
+    if (autoPlayTime == null) return 5;
     return this.autoPlayTime;
   }
 
@@ -268,37 +330,5 @@ class Setting {
   }
 }
 
-Setting setting = Setting();
-/*
-class Config {
-  static LocalFiles _config = LocalFiles(dir: 'config.con');
-  static Future<bool> initSetting() async {
-    if (await _config.readcontent()) {
-      print('Load Setting ${_config.content}');
-      setting = Setting.fromJson(_config.content);
-      setting.ratioDrawerMinHeight ??= setting.ratioDrawerMinHeightGet();
-      setting.ratioDrawerMaxHeight ??= setting.ratioDrawerMaxHeightGet();
-      setting.theme.darkMode ??= false;
-      setting.maximumNewsCount ??= setting.maximumNewsCountGet();
-      setting.autoPlay ??= setting.autoPlayGet();
-      setting.autoPlayTime ??= setting.autoPlayTimeGet();
-      setting.newsLocale.updates ??= true;
-      setting.newsLocale.used ??= 0;
-      print('Load Setting Return True');
-      return true;
-    } else {
-      setting.theme = MyTheme();
-      setting.newsLocale = NewsLocale();
-      print('Load Setting Return False');
-      return false;
-    }
-  }
-
-  static Future<bool> saveSettings() async {
-    _config.content =
-        '{\"MyTheme\":{\"darkMode\":${setting.theme.darkMode.toString()}}, \"NewsLocale\":{\"updates\":${setting.newsLocale.updates.toString()},\"used\":${setting.newsLocale.used.toString()}}}';
-    print(_config.content);
-    return await _config.writeLocalFile();
-  }
-}
-*/
+Setting setting =
+    Setting(theme: MyTheme(darkMode: false), newsLocale: NewsLocale());
