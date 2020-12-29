@@ -1,7 +1,6 @@
 import 'package:connectivity/connectivity.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -37,8 +36,8 @@ class _RegistrationPageState extends State<RegistrationPage> {
   var passwordController = TextEditingController();
 
   void registerUser() async {
-    final UserCredential userCredential = (await _auth
-        .createUserWithEmailAndPassword(
+    final UserCredential userCredential = (
+      await _auth.createUserWithEmailAndPassword(
       email: emailController.text,
       password: passwordController.text,
     )
@@ -232,7 +231,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
                     Navigator.pushNamedAndRemoveUntil(
                         context, '/Login', (route) => false);
                   },
-                  child: Text('Already have rider account? Login here'),
+                  child: Text('Already have user account? Login here'),
                 ),
               ],
             ),

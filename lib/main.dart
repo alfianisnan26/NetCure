@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:flutter/services.dart';
@@ -7,6 +8,8 @@ import 'package:connectivity/connectivity.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:re_netcure/routines/routine_db.dart';
+import 'user.dart';
 import 'dashboard.dart' as dashboard;
 import 'package:re_netcure/progressdialog.dart';
 import 'setting.dart';
@@ -108,11 +111,13 @@ class NetCureLogin extends StatefulWidget {
 }
 
 class _Login extends State<NetCureLogin> {
+  final GlobalKey<ScaffoldState> scaffoldKey = new GlobalKey<ScaffoldState>();
   TextEditingController emailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
 
-  final GlobalKey<ScaffoldState> scaffoldKey = new GlobalKey<ScaffoldState>();
+  Medicine _medicine;
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final uid = FirebaseAuth.instance.currentUser.uid;
 
   void showSnackBar(String title) {
     final snackbar = SnackBar(
@@ -148,9 +153,6 @@ class _Login extends State<NetCureLogin> {
       showSnackBar(thisEx.message);
     }));
 
-    final uid = FirebaseAuth.instance.currentUser.uid;
-    print(uid);
-
     if (uid != null) {
       //verify login
       DatabaseReference userRef =
@@ -158,6 +160,7 @@ class _Login extends State<NetCureLogin> {
 
       userRef.once().then((DataSnapshot snapshot) {
         if (snapshot.value != null) {
+          RoutineDatabase().updateRoutines('No Routines', _medicine);
           Navigator.pushNamedAndRemoveUntil(
               context, '/Dashboard', (route) => false);
         }
@@ -168,6 +171,7 @@ class _Login extends State<NetCureLogin> {
 
   @override
   Widget build(BuildContext context) {
+    
     return Scaffold(
         key: scaffoldKey,
         body: Container(
