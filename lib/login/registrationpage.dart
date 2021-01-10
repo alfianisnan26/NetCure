@@ -1,9 +1,7 @@
 import 'package:connectivity/connectivity.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_database/firebase_database.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:NetCure/database/db.dart';
 
 class RegistrationPage extends StatefulWidget {
   static const String id = 'register';
@@ -11,6 +9,8 @@ class RegistrationPage extends StatefulWidget {
   @override
   _RegistrationPageState createState() => _RegistrationPageState();
 }
+
+bool regist = false;
 
 class _RegistrationPageState extends State<RegistrationPage> {
   final GlobalKey<ScaffoldState> scaffoldKey = new GlobalKey<ScaffoldState>();
@@ -23,10 +23,23 @@ class _RegistrationPageState extends State<RegistrationPage> {
         style: TextStyle(fontSize: 15),
       ),
     );
+    setState(() {
+      loading = false;
+    });
     scaffoldKey.currentState.showSnackBar(snackbar);
   }
 
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  bool loading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    regist = false;
+    loading = false;
+  }
+
+  bool passObs = true;
+  bool cpassObs = true;
 
   var fullNameController = TextEditingController();
 
@@ -36,35 +49,8 @@ class _RegistrationPageState extends State<RegistrationPage> {
 
   var passwordController = TextEditingController();
 
-  void registerUser() async {
-    final UserCredential userCredential = (await _auth
-        .createUserWithEmailAndPassword(
-      email: emailController.text,
-      password: passwordController.text,
-    )
-        .catchError((ex) {
-  
-      // check error and display messages
-      PlatformException thisEx = ex;
-      showSnackBar(thisEx.message);
-    }));
-
-    final uid = FirebaseAuth.instance.currentUser.uid;
-    final DatabaseReference newUserRef =
-        FirebaseDatabase.instance.reference().child('users/${uid}');
-
-    //prepare data to be saved on user table
-    Map userMap = {
-      'fullname': fullNameController.text,
-      'email': emailController.text,
-      'phone': phoneController.text,
-    };
-
-    newUserRef.set(userMap);
-
-    // Take user to the mainPage
-    Navigator.pushNamedAndRemoveUntil(context, '/Dashboard', (route) => false);
-  }
+  var cpassController = TextEditingController();
+  var hintsController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -152,9 +138,66 @@ class _RegistrationPageState extends State<RegistrationPage> {
                       // Password
                       TextField(
                         controller: passwordController,
-                        obscureText: true,
+                        obscureText: passObs,
                         decoration: InputDecoration(
                           labelText: 'Password',
+                          labelStyle: TextStyle(
+                            fontSize: 16.0,
+                          ),
+                          hintStyle: TextStyle(
+                            color: Colors.grey,
+                            fontSize: 10.0,
+                          ),
+                          suffixIcon: IconButton(
+                              icon: Icon(!passObs
+                                  ? Icons.visibility_off
+                                  : Icons.visibility),
+                              onPressed: () {
+                                setState(() {
+                                  passObs = !passObs;
+                                });
+                              }),
+                        ),
+                        style: TextStyle(fontSize: 16),
+                      ),
+                      SizedBox(
+                        height: 10,
+                      ),
+
+                      // Password
+                      TextField(
+                        controller: cpassController,
+                        obscureText: cpassObs,
+                        decoration: InputDecoration(
+                            labelText: 'Confirm Password',
+                            labelStyle: TextStyle(
+                              fontSize: 16.0,
+                            ),
+                            hintStyle: TextStyle(
+                              color: Colors.grey,
+                              fontSize: 10.0,
+                            ),
+                            suffixIcon: IconButton(
+                                icon: Icon(!cpassObs
+                                    ? Icons.visibility_off
+                                    : Icons.visibility),
+                                onPressed: () {
+                                  setState(() {
+                                    cpassObs = !cpassObs;
+                                  });
+                                })),
+                        style: TextStyle(fontSize: 16),
+                      ),
+                      SizedBox(
+                        height: 10,
+                      ),
+
+                      // Password
+                      TextField(
+                        controller: hintsController,
+                        obscureText: false,
+                        decoration: InputDecoration(
+                          labelText: 'Hints',
                           labelStyle: TextStyle(
                             fontSize: 16.0,
                           ),
@@ -175,7 +218,6 @@ class _RegistrationPageState extends State<RegistrationPage> {
                           width: MediaQuery.of(context).size.width - 75,
                           child: Container(
                               padding: EdgeInsets.fromLTRB(8, 2, 8, 2),
-
                               child: RaisedButton(
                                 shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(50)),
@@ -185,54 +227,102 @@ class _RegistrationPageState extends State<RegistrationPage> {
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceEvenly,
                                   children: [
-                                    Text('REGISTER'),
+                                    (loading)
+                                        ? SizedBox(
+                                            height: 20,
+                                            width: 20,
+                                            child: CircularProgressIndicator())
+                                        : Text('REGISTER'),
                                   ],
                                 ),
-                                onPressed: () async {
-                                  //check network availability
-                                  var connectivityResult =
-                                      await Connectivity().checkConnectivity();
-                                  if (connectivityResult !=
-                                          ConnectivityResult.mobile &&
-                                      connectivityResult !=
-                                          ConnectivityResult.wifi) {
-                                    showSnackBar(
-                                        'No internet connectivity. Try again');
-                                    return;
-                                  }
+                                onPressed: loading
+                                    ? null
+                                    : () async {
+                                        setState(() {
+                                          loading = true;
+                                        });
+                                        FocusScope.of(context)
+                                            .requestFocus(new FocusNode());
 
-                                  if (fullNameController.text.length < 4) {
-                                    showSnackBar(
-                                        'Please enter a valid full name');
-                                    return;
-                                  }
-                                  if (phoneController.text.length < 10) {
-                                    showSnackBar(
-                                        'Please provide a valid phone numebr');
-                                    return;
-                                  }
-                                  if (!emailController.text.contains('@')) {
-                                    showSnackBar(
-                                        'Please provide a valid email address');
-                                    return;
-                                  }
-                                  if (passwordController.text.length < 8) {
-                                    showSnackBar(
-                                        'Password length at least 8 characters');
-                                    return;
-                                  }
-                                  registerUser();
-                                },
+                                        var connectivityResult =
+                                            await Connectivity()
+                                                .checkConnectivity();
+                                        if (connectivityResult !=
+                                                ConnectivityResult.mobile &&
+                                            connectivityResult !=
+                                                ConnectivityResult.wifi) {
+                                          showSnackBar(
+                                              'No internet connectivity. Try again');
+                                          return;
+                                        }
+
+                                        if (fullNameController.text.length <
+                                            4) {
+                                          showSnackBar(
+                                              'Please enter a valid full name');
+                                          return;
+                                        }
+                                        if (phoneController.text.length < 10) {
+                                          showSnackBar(
+                                              'Please provide a valid phone numebr');
+                                          return;
+                                        }
+                                        if (!emailController.text
+                                            .contains('@')) {
+                                          showSnackBar(
+                                              'Please provide a valid email address');
+                                          return;
+                                        }
+                                        if (passwordController.text.length <
+                                            8) {
+                                          showSnackBar(
+                                              'Password length at least 8 characters');
+                                          return;
+                                        }
+                                        if (passwordController.text !=
+                                            cpassController.text) {
+                                          showSnackBar(
+                                              "Password does not match");
+                                          return;
+                                        }
+                                        if (hintsController.text.length < 4) {
+                                          showSnackBar(
+                                              "Please enter hints in case for forgetting password");
+                                          return;
+                                        }
+
+                                        if (await profile.checkMail(
+                                            onEmail: emailController.text)) {
+                                          showSnackBar(
+                                              "Email is registered, please use another email");
+                                        } else {
+                                          if (await profile.generate(
+                                              fullNameController.text,
+                                              phoneController.text,
+                                              emailController.text,
+                                              passwordController.text,
+                                              hintsController.text)) {
+                                            regist = true;
+                                            setState(() {
+                                              loading = false;
+                                            });
+                                            Navigator.pop(context);
+                                            return;
+                                          } else {
+                                            regist = false;
+                                            return;
+                                          }
+                                        }
+                                      },
                               ))),
                     ],
                   ),
                 ),
                 FlatButton(
                   onPressed: () {
-                    Navigator.pushNamedAndRemoveUntil(
-                        context, '/Login', (route) => false);
+                    Navigator.pop(context);
                   },
-                  child: Text('Already have rider account? Login here'),
+                  child: Text('Already have an account? Login here'),
                 ),
               ],
             ),

@@ -6,13 +6,16 @@ import 'dart:convert';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:NetCure/dialogboxes.dart';
-import 'setting.dart';
+import 'database/setting.dart';
 
 class Source {
   String id;
   String name;
 
   Source(this.id, this.name);
+  String stringify() {
+    return "{\"id\":\"$id\"" + "\"name\":\"$name\"}";
+  }
 
   factory Source.fromJson(dynamic json) {
     return Source(json['id'] as String, json['name'] as String);
@@ -25,6 +28,17 @@ class Articles {
   String author, title, description, url, urlToImage, publishedAt, content;
   Articles(this.source, this.author, this.title, this.description, this.url,
       this.urlToImage, this.publishedAt, this.content);
+  String stringify() {
+    return "{\"source\":${source.stringify()}," +
+        "\"author\":\"$author\"," +
+        "\"author\":\"$title\"," +
+        "\"author\":\"$description\"," +
+        "\"author\":\"$url\"," +
+        "\"author\":\"$urlToImage\"," +
+        "\"author\":\"$publishedAt\"," +
+        "\"author\":\"$content\"}";
+  }
+
   factory Articles.fromJson(dynamic json) {
     return Articles(
         Source.fromJson(json['source']),
@@ -44,6 +58,14 @@ class NewsGet {
   List<Articles> articles;
 
   NewsGet(this.status, [this.articles]);
+
+  String stringify() {
+    String article = "";
+    for (int a = 0; a < articles.length; a++) {
+      article += articles[a].stringify();
+    }
+    return "{\"status\":\"${this.status}\",\"articles\":[$article]";
+  }
 
   factory NewsGet.fromJson(dynamic json) {
     bool mystats;
@@ -185,13 +207,6 @@ class _NewsCards extends State<NewsCards> {
     return a;
   }
 
-  Future<bool> saveNews(NewsGet a, LocalFiles file) {
-    print('SaveNews');
-    file.content = jsonEncode(a);
-    print('Save Success');
-    return file.writeLocalFile();
-  }
-
   NewsGet generateNews(NewsGet foo) {
     NewsGet forReturn = NewsGet(true, []);
     for (int a = 0; a < foo.articles.length; a++) {
@@ -216,23 +231,15 @@ class _NewsCards extends State<NewsCards> {
   }
 
   Future<NewsGet> loadNews() async {
-    LocalFiles myFile = LocalFiles(dir: 'latest.nws');
     NewsGet foo, forReturn = NewsGet(false, []);
-
-    if (!await myFile.readcontent() || setting.newsLocale.updates) {
-      final http.Response resp = await http.get(setting.newsLocale.link);
-      if (resp.statusCode != 200) {
-        print(
-            'Getting Data ONLINE FAILED error ${resp.statusCode} from ${setting.newsLocale.link}');
-        return NewsGet(false, null);
-      }
-      foo = checkNews(NewsGet.fromJson(jsonDecode(resp.body)));
-      print('Getting Data ONLINE SUCCESS from ${setting.newsLocale.link}');
-      setting.newsLocale.updates = !await saveNews(foo, myFile);
-    } else {
-      foo = NewsGet.fromJson(jsonDecode(myFile.content));
-      print('Getting Data OFFLINE SUCCESS\n');
+    final http.Response resp = await http.get(setting.newsLocale.link);
+    if (resp.statusCode != 200) {
+      print(
+          'Getting Data ONLINE FAILED error ${resp.statusCode} from ${setting.newsLocale.link}');
+      return NewsGet(false, null);
     }
+    foo = checkNews(NewsGet.fromJson(jsonDecode(resp.body)));
+    print('Getting Data ONLINE SUCCESS from ${setting.newsLocale.link}');
     forReturn = generateNews(foo);
     if (forReturn.realTotal == 0) {
       return NewsGet(false);

@@ -2,11 +2,10 @@ import 'dart:ui';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
-import 'package:NetCure/hospitalmap.dart';
-import 'package:NetCure/hospital/hospitallist.dart' as maps;
 import 'newsapi.dart';
-import 'setting.dart';
+import 'database/setting.dart';
 import 'dialogboxes.dart' as dialogBox;
+import 'package:NetCure/database/db.dart' as db;
 
 BuildContext currentContext;
 
@@ -271,17 +270,16 @@ class _TabBar extends State<GenerateTabBar>
                             child: Stack(
                           children: [
                             Container(
-                                color: Colors.red,
-                                height: (setting.screenSize.height *
-                                            setting.ratioDrawerMaxHeightGet() -
-                                        40) -
-                                    (setting.screenSize.height *
-                                            setting.ratioDrawerMinHeightGet() -
-                                        40) -
-                                    0.5,
-                                child: (widget.mapState)
-                                    ? maps.HospitalList()
-                                    : null),
+                              color: Colors.red,
+                              height: (setting.screenSize.height *
+                                          setting.ratioDrawerMaxHeightGet() -
+                                      40) -
+                                  (setting.screenSize.height *
+                                          setting.ratioDrawerMinHeightGet() -
+                                      40) -
+                                  0.5,
+                              //child: SfMaps(),
+                            ),
                             Padding(
                                 padding: EdgeInsets.only(top: widget.ecp),
                                 child: Container(
@@ -393,7 +391,7 @@ class NavDrawer extends StatelessWidget {
           DrawerHeader(
             child: Padding(
                 padding: EdgeInsets.fromLTRB(0, 100, 0, 0),
-                child: Text('Who Am I',
+                child: Text(db.profile.data.name,
                     style: TextStyle(
                         color: Colors.white,
                         fontSize: 25,

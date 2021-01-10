@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
-import 'package:flutter/services.dart';
 import 'package:NetCure/login/registrationpage.dart';
 import 'package:connectivity/connectivity.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_database/firebase_database.dart';
 import 'dashboard.dart' as dashboard;
-import 'package:NetCure/login/progressdialog.dart';
-import 'setting.dart';
+import 'database/setting.dart';
+import 'package:NetCure/database/db.dart' as db;
+import 'package:NetCure/login/forgotpass.dart';
+import 'package:NetCure/emergency/maps.dart' as mp;
 
 void main() {
   runApp(OpenClass());
@@ -40,10 +38,13 @@ class _OpenClass extends State<OpenClass> {
       initialRoute: '/',
       routes: {
         '/': (context) => NetCure(),
-        '/Login': (context) => NetCureLogin(),
+        '/Login': (context) //=> NetCureLogin(),
+            =>
+            mp.Maps(),
         '/RegistrationPage': (context) => RegistrationPage(),
         '/Dashboard': (context) => dashboard.Dashboard(),
         '/Dashboard/Settings': (context) => SettingScreen(),
+        '/Login/Forgot': (context) => ForgotPassword()
       },
       themeMode: setting.theme.currentTheme(),
       theme: setting.theme.get(false),
@@ -62,7 +63,9 @@ class _State extends State<NetCure> {
     if (setting.thisTrue)
       Navigator.pushNamed(context, '/Dashboard');
     else
-      Navigator.pushNamed(context, '/Login');
+      mp.maps
+          .updatePos()
+          .then((value) => Navigator.pushNamed(context, '/Login'));
   }
 
   startTime() async {
@@ -72,7 +75,6 @@ class _State extends State<NetCure> {
 
   void initialize() async {
     WidgetsFlutterBinding.ensureInitialized();
-    await Firebase.initializeApp();
     Setting open = await setting.loadSetting();
     if (open != null) {
       setting = open;
@@ -117,6 +119,8 @@ class _State extends State<NetCure> {
   }
 }
 
+String prevEmail;
+
 class NetCureLogin extends StatefulWidget {
   @override
   _Login createState() => _Login();
@@ -127,7 +131,9 @@ class _Login extends State<NetCureLogin> {
   TextEditingController passwordController = TextEditingController();
 
   final GlobalKey<ScaffoldState> scaffoldKey = new GlobalKey<ScaffoldState>();
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  _dissKeyboard(BuildContext context) {
+    FocusScope.of(context).requestFocus(new FocusNode());
+  }
 
   void showSnackBar(String title) {
     final snackbar = SnackBar(
@@ -140,53 +146,23 @@ class _Login extends State<NetCureLogin> {
     scaffoldKey.currentState.showSnackBar(snackbar);
   }
 
-  login() async {
-    //show waiting dialog
-    showDialog(
-      barrierDismissible: false,
-      context: context,
-      builder: (BuildContext context) => ProgressDialog(
-        'logging in',
-      ),
-    );
-
-    final UserCredential userCredential = (await _auth
-        .signInWithEmailAndPassword(
-      email: emailController.text,
-      password: passwordController.text,
-    )
-        .catchError((ex) {
-      ;
-      // check error and display messages
-      Navigator.pop(context);
-      PlatformException thisEx = ex;
-      showSnackBar(thisEx.message);
-    }));
-
-    final uid = FirebaseAuth.instance.currentUser.uid;
-    print(uid);
-
-    if (uid != null) {
-      //verify login
-      DatabaseReference userRef =
-          FirebaseDatabase.instance.reference().child('users/${uid}');
-
-      userRef.once().then((DataSnapshot snapshot) {
-        if (snapshot.value != null) {
-          Navigator.pushNamedAndRemoveUntil(
-              context, '/Dashboard', (route) => false);
-        }
-      });
-    }
-    return uid;
+  bool logIn = false;
+  @override
+  void initState() {
+    super.initState();
+    logIn = false;
   }
 
+  bool cpassObs = true;
   @override
   Widget build(BuildContext context) {
+    if (regist) {
+      Future.delayed(const Duration(milliseconds: 500), () {
+        showSnackBar("Account created successfully, please login");
+      });
+      regist = false;
+    }
     return Scaffold(
-        floatingActionButton: FloatingActionButton(
-          onPressed: () => Navigator.pushNamed(context, '/Dashboard'),
-        ),
         key: scaffoldKey,
         body: Container(
             height: MediaQuery.of(context).size.height,
@@ -243,47 +219,30 @@ class _Login extends State<NetCureLogin> {
                       Padding(
                         padding: const EdgeInsets.only(left: 40.0, right: 40),
                         child: TextField(
-                          obscureText: true,
+                          obscureText: cpassObs,
                           controller: passwordController,
                           decoration: InputDecoration(
                               labelText: 'Password',
                               labelStyle: TextStyle(
                                 fontSize: 16.0,
                               ),
+                              suffixIcon: IconButton(
+                                  icon: Icon(!cpassObs
+                                      ? Icons.visibility_off
+                                      : Icons.visibility),
+                                  onPressed: () {
+                                    setState(() {
+                                      cpassObs = !cpassObs;
+                                    });
+                                  }),
                               hintStyle: TextStyle(
                                   color: Colors.grey, fontSize: 10.0)),
                           style: TextStyle(fontSize: 16),
                         ),
                       ),
                       SizedBox(
-                        height: 40,
+                        height: 20,
                       ),
-                      SizedBox(
-                          height: 50,
-                          width: MediaQuery.of(context).size.width - 75,
-                          child: Container(
-                              padding: EdgeInsets.fromLTRB(8, 2, 8, 2),
-                              child: RaisedButton(
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(50)),
-                                textColor: Colors.black,
-                                color: Colors.white,
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceEvenly,
-                                  children: [
-                                    Image.asset(
-                                      'assets/images/google.png',
-                                      height: 20,
-                                    ),
-                                    Text('Sign in with Google')
-                                  ],
-                                ),
-                                onPressed: () {
-                                  print(emailController.text);
-                                  print(passwordController.text);
-                                },
-                              ))),
                       SizedBox(
                           height: 60,
                           width: MediaQuery.of(context).size.width - 75,
@@ -305,10 +264,8 @@ class _Login extends State<NetCureLogin> {
                                     child: Text('Sign Up'),
                                     onPressed: () {
                                       //go to Sign Up Page
-                                      Navigator.pushNamedAndRemoveUntil(
-                                          context,
-                                          '/RegistrationPage',
-                                          (route) => false);
+                                      Navigator.pushNamed(
+                                          context, '/RegistrationPage');
                                     },
                                   )),
                               Container(
@@ -322,48 +279,106 @@ class _Login extends State<NetCureLogin> {
                                             BorderRadius.circular(50)),
                                     textColor: Colors.black,
                                     color: Color.fromRGBO(155, 246, 161, 1),
-                                    child: Text('Login'),
-                                    onPressed: () async {
-                                      // check if user exists
-                                      login();
-                                      if (login()) {
-                                        showSnackBar(
-                                            'Login failed, check detail or Register');
-                                        return;
-                                      }
+                                    child: (logIn)
+                                        ? SizedBox(
+                                            height: 20,
+                                            width: 20,
+                                            child: CircularProgressIndicator())
+                                        : Text('Login'),
+                                    onPressed: (logIn)
+                                        ? null
+                                        : () async {
+                                            setState(() {
+                                              logIn = true;
+                                            });
+                                            _dissKeyboard(context);
+                                            //check network availability
+                                            var connectivityResult =
+                                                await Connectivity()
+                                                    .checkConnectivity();
+                                            if (connectivityResult !=
+                                                    ConnectivityResult.mobile &&
+                                                connectivityResult !=
+                                                    ConnectivityResult.wifi) {
+                                              showSnackBar(
+                                                  'No internet connectivity. Try again');
+                                              setState(() {
+                                                logIn = false;
+                                              });
+                                              return;
+                                            }
 
-                                      //check network availability
-                                      var connectivityResult =
-                                          await Connectivity()
-                                              .checkConnectivity();
-                                      if (connectivityResult !=
-                                              ConnectivityResult.mobile &&
-                                          connectivityResult !=
-                                              ConnectivityResult.wifi) {
-                                        showSnackBar(
-                                            'No internet connectivity. Try again');
-                                        return;
-                                      }
+                                            if (!emailController.text
+                                                .contains('@')) {
+                                              showSnackBar(
+                                                  'Please enter a valid email address');
+                                              setState(() {
+                                                logIn = false;
+                                              });
+                                              return;
+                                            }
 
-                                      if (!emailController.text.contains('@')) {
-                                        showSnackBar(
-                                            'Please enter a valid email address');
-                                        return;
-                                      }
+                                            if (passwordController.text.length <
+                                                8) {
+                                              showSnackBar(
+                                                  'Password must be atleast 8 characters');
+                                              setState(() {
+                                                logIn = false;
+                                              });
+                                              return;
+                                            }
+                                            if (prevEmail !=
+                                                emailController.text) {
+                                              prevEmail = emailController.text;
+                                              db.profile.counter = 0;
+                                            }
 
-                                      if (passwordController.text.length < 8) {
-                                        showSnackBar(
-                                            'Password must be atleast 8 characters');
-                                        return;
-                                      }
-                                    },
+                                            // check if user exists
+                                            switch (await db.profile.login(
+                                                emailController.text,
+                                                passwordController.text)) {
+                                              case 1:
+                                                showSnackBar(
+                                                    "Account not found");
+                                                break;
+                                              case 2:
+                                                showSnackBar(
+                                                    "Password does not match");
+                                                break;
+                                              case 3:
+                                                showSnackBar(
+                                                    "Password does not match, forget password?");
+                                                break;
+                                              case 4:
+                                                showSnackBar(
+                                                    "Account is expired, please re-register");
+                                                break;
+                                              case 0:
+                                                setState(() {
+                                                  logIn = false;
+                                                });
+                                                Navigator.of(context)
+                                                    .pushNamedAndRemoveUntil(
+                                                        '/Dashboard',
+                                                        (route) => false);
+                                                break;
+                                              default:
+                                                {
+                                                  showSnackBar(
+                                                      "Error, cannot login");
+                                                }
+                                            }
+                                            setState(() {
+                                              logIn = false;
+                                            });
+                                          },
                                   )),
                             ],
                           ))
                     ])),
                     FlatButton(
                       onPressed: () {
-                        //forgot password screen
+                        Navigator.of(context).pushNamed("/Login/Forgot");
                       },
                       textColor: Colors.black,
                       child: Text(
