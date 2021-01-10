@@ -62,6 +62,10 @@ class ProfileKey {
 class PersonalData {
   final picker = ImagePicker();
   Uint8List myPhoto;
+  DateTime dob;
+  int sex;
+  int ethnic;
+  List<String> deceases;
   String base64 = "";
 
   Uint8List get userPhoto {
@@ -99,23 +103,28 @@ class ProfileData {
   String personalString;
   PersonalData personal = PersonalData();
 
-  ProfileData(this.age, this.hints, this.name, this.phone, this.shaPass,
-      this.personalString);
+  ProfileData(
+      {this.age,
+      this.hints,
+      this.name,
+      this.phone,
+      this.shaPass,
+      this.personalString});
 
   factory ProfileData.fromJson(dynamic json) {
     return ProfileData(
-        json['age'] as int,
-        json['hints'] as String,
-        json['name'] as String,
-        json['phone'] as String,
-        json['sha_pass'] as String,
-        json['personal'] as String);
+        age: json['age'] as int,
+        hints: json['hints'] as String,
+        name: json['name'] as String,
+        phone: json['phone'] as String,
+        shaPass: json['sha_pass'] as String,
+        personalString: json['personal'] as String);
   }
 }
 
 class ProfileDB {
   ProfileKey key;
-  ProfileData data;
+  ProfileData data = ProfileData();
   int counter = 0;
   String encMD5(String input) =>
       crypto.md5.convert(Utf8Encoder().convert(input)).toString();
@@ -165,8 +174,9 @@ class ProfileDB {
   }
 
   Future<bool> saveSetting(Setting sett) async {
-    return await write(
-        "${key.keyEmail}/setting.json", "\"${sett.toJson().toString()}\"");
+    String resp = "${sett.toJson().toString()}";
+    print(resp);
+    return await write("${key.keyEmail}/setting.json", "\"${key.enc(resp)}\"");
   }
 
   Future<Setting> getSetting() async {
@@ -264,118 +274,3 @@ class ProfileDB {
 }
 
 ProfileDB profile = ProfileDB();
-
-class MyProfile extends StatefulWidget {
-  @override
-  _MP createState() => _MP();
-}
-
-class _MP extends State<MyProfile> {
-  final GlobalKey<ScaffoldState> scaffoldKey = new GlobalKey<ScaffoldState>();
-  void showSnackBar(String title) {
-    final snackbar = SnackBar(
-      content: Text(
-        title,
-        textAlign: TextAlign.center,
-        style: TextStyle(fontSize: 15),
-      ),
-    );
-    scaffoldKey.currentState.showSnackBar(snackbar);
-  }
-
-  Widget menuProfile(String title, Widget child) {
-    return Container(
-        padding: EdgeInsets.symmetric(horizontal: 10),
-        decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey.withOpacity(0.1), width: 1)),
-        height: 70,
-        child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [Text(title), child]));
-  }
-
-  Widget menuSeparator(String text) {
-    return Container(
-        padding: EdgeInsets.symmetric(horizontal: 10),
-        decoration: BoxDecoration(color: Colors.grey.withOpacity(0.1)),
-        width: setting.screenSize.width,
-        height: 15,
-        child: Align(
-            alignment: Alignment.centerLeft,
-            child: Text(text,
-                style: TextStyle(
-                    fontWeight: FontWeight.w900,
-                    fontSize: 10,
-                    color: Theme.of(context).primaryColor))));
-  }
-
-  bool loading = false;
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-        key: scaffoldKey,
-        appBar: AppBar(
-          title: Text("My Profile"),
-        ),
-        body: Builder(
-          builder: (context) {
-            return SingleChildScrollView(
-              child: Stack(children: [
-                Column(
-                  children: [
-                    Container(
-                        width: setting.screenSize.width,
-                        height: setting.screenSize.height * 0.3,
-                        color: Colors.grey,
-                        child: (profile.data.personal.myPhoto == null)
-                            ? Image.asset("assets/images/pillsBW.jpg",
-                                fit: BoxFit.cover)
-                            : Image.memory(
-                                profile.data.personal.myPhoto,
-                                fit: BoxFit.cover,
-                              )),
-                  ],
-                ),
-                Padding(
-                    padding: EdgeInsets.only(
-                        top: setting.screenSize.height * 0.3 - 25,
-                        left: setting.screenSize.width * 0.80),
-                    child: FloatingActionButton(
-                      backgroundColor: (loading) ? Colors.grey : null,
-                      heroTag: null,
-                      onPressed: (loading)
-                          ? null
-                          : () async {
-                              if (await profile.data.personal.updatePhoto()) {
-                                print("Photo Updated");
-                                setState(() {
-                                  loading = true;
-                                });
-                                if (await profile.updatePersonal()) {
-                                  print("Photo Saved to Online");
-                                  showSnackBar(
-                                      "Photo saved to online database");
-                                } else {
-                                  print("Cannot Save to online");
-                                  showSnackBar("Error saving photo");
-                                }
-                                setState(() {
-                                  loading = false;
-                                });
-                              }
-                            },
-                      tooltip: 'Pick Image',
-                      child: (loading)
-                          ? Padding(
-                              padding: EdgeInsets.all(3),
-                              child: CircularProgressIndicator())
-                          : Icon(Icons.add_a_photo),
-                    )),
-              ]),
-            );
-          },
-        ));
-  }
-}
-
-test() {}

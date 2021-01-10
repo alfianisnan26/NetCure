@@ -1,3 +1,4 @@
+import 'package:NetCure/database/profile.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:NetCure/login/registrationpage.dart';
@@ -22,6 +23,9 @@ MyTheme themeInit = MyTheme();
 class _OpenClass extends State<OpenClass> {
   @override
   Widget build(BuildContext context) {
+    themeInit.addListener(() {
+      setState(() {});
+    });
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       initialRoute: '/',
@@ -33,7 +37,7 @@ class _OpenClass extends State<OpenClass> {
         '/RegistrationPage': (context) => RegistrationPage(),
         '/Dashboard': (context) => dashboard.Dashboard(),
         '/Dashboard/Settings': (context) => SettingScreen(),
-        '/Dashboard/Profile': (context) => db.MyProfile(),
+        '/Dashboard/Profile': (context) => MyProfile(),
         '/Login/Forgot': (context) => ForgotPassword()
       },
       themeMode: themeInit.currentTheme(),
@@ -46,7 +50,9 @@ class _OpenClass extends State<OpenClass> {
 Future<void> initializeSetting(
     BuildContext context, String email, String pass) async {
   setting = await db.profile.getSetting();
+  bool dm = setting.theme.darkMode;
   setting.theme = themeInit;
+  setting.theme.switchTheme(dm);
   setting.screenSize = MediaQuery.of(context).size;
   setting.email = email;
   setting.pass = pass;
@@ -64,9 +70,6 @@ class NetCure extends StatefulWidget {
 
 class _State extends State<NetCure> {
   void initialize() async {
-    themeInit.addListener(() {
-      setState(() {});
-    });
     hp.hospital.loadHospital();
     print('Load Setting Complete');
     WidgetsFlutterBinding.ensureInitialized();

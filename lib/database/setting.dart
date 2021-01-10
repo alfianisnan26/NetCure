@@ -22,6 +22,11 @@ class _SettingScreen extends State<SettingScreen> {
   void initState() {
     super.initState();
     print("Init State");
+    tempNewsCount.value = setting.maximumNewsCountGet();
+    tempNewsCount.addListener(() {
+      setState(() {});
+    });
+
     _tempDarkMode = setting.theme.darkMode ??= false;
     _tempnewsLocale = setting.newsLocale.used ??= 0;
     ratioMax.value = setting.ratioDrawerMaxHeightGet();
@@ -34,18 +39,10 @@ class _SettingScreen extends State<SettingScreen> {
     });
     print(_tempnewsLocale);
   }
-  /*
-  @override
-  void dispose() {
-    super.dispose();
-    ratioMax.removeListener(() {});
-    ratioMin.removeListener(() {});
-  }
-  */
 
   Future<bool> saveSetting() async {
     if (await Setting(
-            maximumNewsCount: setting.maximumNewsCount,
+            maximumNewsCount: tempNewsCount.value,
             drawerRow: setting.drawerRow,
             autoPlay: setting.autoPlay,
             autoPlayTime: setting.autoPlayTime,
@@ -64,6 +61,7 @@ class _SettingScreen extends State<SettingScreen> {
       ));
       _tempDarkMode = setting.theme.darkMode;
       setting.newsLocale.used = _tempnewsLocale;
+      tempNewsCount.value = setting.maximumNewsCountGet();
       return true;
     }
 
@@ -105,6 +103,12 @@ class _SettingScreen extends State<SettingScreen> {
         onWillPop: () async {
           if (_tempDarkMode != setting.theme.darkMode) changes = true;
           if (_tempnewsLocale != setting.newsLocale.used) changes = true;
+          if (tempNewsCount.value != setting.maximumNewsCountGet())
+            changes = true;
+          if (ratioMax.value != setting.ratioDrawerMaxHeightGet())
+            changes = true;
+          if (ratioMin.value != setting.ratioDrawerMinHeightGet())
+            changes = true;
           if (changes) {
             Scaffold.of(scaffoldContext).showSnackBar(SnackBar(
               content: Text('Setting are not saved, continue?'),
@@ -130,7 +134,8 @@ class _SettingScreen extends State<SettingScreen> {
                 return IconButton(
                     icon: Icon(Icons.check),
                     onPressed: () async {
-                      if (await saveSetting()) changes = false;
+                      if (await saveSetting()) if (await db.profile
+                          .saveSetting(setting)) changes = false;
                     });
               })
             ],
@@ -170,7 +175,16 @@ class _SettingScreen extends State<SettingScreen> {
                             return SDSlider();
                           }))),
               menuSeparator('NEWS UPDATE'),
-              menuSetting('News Count', Text('Slider')),
+              menuSetting(
+                  'News Count',
+                  MaterialButton(
+                      color: Colors.grey.withOpacity(0.5),
+                      child: Text(tempNewsCount.value.toString()),
+                      onPressed: () => showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return ASlider();
+                          }))),
               menuSetting('Update Schedule', Text('DropDown')),
               menuSetting(
                   'News Locale',

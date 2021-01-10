@@ -1,9 +1,12 @@
 import 'dart:ui';
+import 'package:NetCure/database/hospital.dart';
 import 'package:NetCure/emergency/maps.dart' as maps;
 import 'package:geolocator/geolocator.dart' show Position;
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
+import 'package:latlong/latlong.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'newsapi.dart';
 import 'database/setting.dart';
 import 'dialogboxes.dart' as dialogBox;
@@ -11,6 +14,7 @@ import 'package:NetCure/database/db.dart' as db;
 import 'package:NetCure/debug.dart' as debug;
 
 BuildContext currentContext;
+ValueNotifier<bool> updates = ValueNotifier(false);
 
 class CardItem {
   Function onTap;
@@ -45,6 +49,11 @@ class _SmallCardExpanded extends State<SmallCardExpanded> {
 
   @override
   void initState() {
+    updates.addListener(() {
+      setState(() {
+        print("Update_SmallCard");
+      });
+    });
     _scsv.addListener(() {
       if (_scsv.position.isScrollingNotifier.value && toExpand) {
         setState(() {
@@ -62,11 +71,15 @@ class _SmallCardExpanded extends State<SmallCardExpanded> {
     });
     await Future.delayed(Duration(milliseconds: 125));
     print('${widget.index}');
+    maps.maps.forLoc.value = widget.index;
     await _scsv.position.animateTo((widget.index * width),
         duration: Duration(milliseconds: 125), curve: Curves.fastOutSlowIn);
     print('Expanded = $expanded of ${widget.key.toString()}');
     print('_scsv ${_scsv.position.pixels}');
-    toExpand = true;
+
+    setState(() {
+      toExpand = true;
+    });
   }
 
   @override
@@ -87,7 +100,9 @@ class _SmallCardExpanded extends State<SmallCardExpanded> {
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.all(Radius.circular(10))),
               color: widget.myCards.color,
-              child: widget.myCards.smallWidget,
+              child: (expanded && toExpand)
+                  ? widget.myCards.expandedWidget
+                  : widget.myCards.smallWidget,
             )));
   }
 }
@@ -184,21 +199,139 @@ class _TabBar extends State<GenerateTabBar>
   TabController _controller;
   int currentClicked = 0;
 
+  void emergencyGenerator() {
+    cardEmergency.canBig = false;
+    cardEmergency.myCards =
+        List<CardItem>.generate(hospital.hospital.length, (index) {
+      RSDBJB data = hospital.hospital[index];
+      String estString;
+      if (data.est.inMinutes < 1) {
+        estString = "~" + data.est.inSeconds.toString() + " sec";
+      } else if (data.est.inHours < 1) {
+        estString = "~" +
+            data.est.inMinutes.toString() +
+            " min " +
+            (data.est.inSeconds - (60 * data.est.inMinutes)).toString() +
+            " sec";
+      } else if (data.est.inDays < 1) {
+        estString = "~" +
+            data.est.inHours.toString() +
+            " hrs " +
+            (data.est.inMinutes - (60 * data.est.inHours)).toString() +
+            " min";
+      } else {
+        estString = "~" +
+            data.est.inDays.toString() +
+            " day " +
+            (data.est.inHours - (24 * data.est.inDays)).toString() +
+            " hrs";
+      }
+      return CardItem(
+          () => launch(
+              "tel:${hospital.hospital[index].phone.replaceAll("-", "")}"),
+          Colors.red,
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text(
+                hospital.hospital[index].jenis +
+                    " " +
+                    hospital.hospital[index].nama,
+                maxLines: 2,
+                textAlign: TextAlign.center,
+                overflow: TextOverflow.fade,
+                style: TextStyle(fontSize: setting.ratioDrawerMinHeight * 50),
+              ),
+              Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                Text(
+                  (hospital.hospital[index].radius != null)
+                      ? (hospital.hospital[index].radius > 200)
+                          ? ">200"
+                          : hospital.hospital[index].radius.toStringAsFixed(1)
+                      : "NaN",
+                  overflow: TextOverflow.fade,
+                  style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: setting.ratioDrawerMinHeight * 180),
+                ),
+                Text("km",
+                    overflow: TextOverflow.fade,
+                    style:
+                        TextStyle(fontSize: setting.ratioDrawerMinHeight * 100))
+              ]),
+              Text(estString,
+                  overflow: TextOverflow.ellipsis,
+                  style:
+                      TextStyle(fontSize: setting.ratioDrawerMinHeight * 80)),
+            ],
+          ),
+          null,
+          SafeArea(
+              minimum: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              top: true,
+              bottom: true,
+              left: true,
+              right: true,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        data.phone,
+                        style: TextStyle(fontSize: 17),
+                        overflow: TextOverflow.visible,
+                      ),
+                      Text(data.radius.toStringAsFixed(1) + "km",
+                          style: TextStyle(fontSize: 17),
+                          overflow: TextOverflow.visible)
+                    ],
+                  ),
+                  Text(
+                    data.jenis + " " + data.nama,
+                    overflow: TextOverflow.fade,
+                    maxLines: 2,
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: (setting.screenSize.height *
+                            setting.ratioDrawerMinHeight *
+                            0.15)),
+                  ),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(data.kecamatan, overflow: TextOverflow.ellipsis),
+                      Text(estString, overflow: TextOverflow.ellipsis)
+                    ],
+                  )
+                ],
+              )));
+    });
+    cardEmergency.renderCards("Emergecy_Cards");
+    updates.value = !updates.value;
+  }
+
   @override
   void initState() {
     super.initState();
+    emergencyGenerator();
+    updates.addListener(() {
+      setState(() {
+        print("Update_SmallCard");
+      });
+    });
     cardRoutines.dumpGenerate(
         true,
         25,
         () => dialogBox.ackAlert(currentContext, 'Trial', 'Routines'),
         Colors.green,
         "Routine");
-    cardEmergency.dumpGenerate(
-        false,
-        10,
-        () => dialogBox.ackAlert(currentContext, 'Trial', 'Emergency'),
-        Colors.red,
-        "Emergency");
+
     cardLogs.dumpGenerate(
         true,
         30,
@@ -298,19 +431,31 @@ class _TabBar extends State<GenerateTabBar>
                             ),
                             Padding(
                                 padding: EdgeInsets.only(top: widget.ecp),
-                                child: Container(
+                                child: Stack(children: [
+                                  Container(
                                     height: setting.screenSize.height *
                                             setting.ratioDrawerMinHeightGet() -
                                         40,
+                                    width: setting.screenSize.width,
                                     color: (setting.theme.darkMode)
                                         ? Colors.grey.shade900
                                         : Colors.white,
-                                    child: cardEmergency.cardsGrid(
-                                      false,
-                                      Axis.horizontal,
-                                      1,
-                                      null,
-                                    ))),
+                                  ),
+                                  Container(
+                                      height: setting.screenSize.height *
+                                              setting
+                                                  .ratioDrawerMinHeightGet() -
+                                          40,
+                                      color: (setting.theme.darkMode)
+                                          ? Colors.grey.shade900
+                                          : Colors.white,
+                                      child: cardEmergency.cardsGrid(
+                                        false,
+                                        Axis.horizontal,
+                                        1,
+                                        null,
+                                      ))
+                                ])),
                           ],
                         )),
                         Opacity(

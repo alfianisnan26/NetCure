@@ -96,6 +96,7 @@ class NewsLocale {
     'Italy',
     'Japan',
     'Korea',
+    'Lithuania',
     'Latvia',
     'Morocco',
     'Mexico',

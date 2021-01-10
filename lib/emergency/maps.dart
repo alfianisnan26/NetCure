@@ -1,3 +1,5 @@
+import 'package:NetCure/database/hospital.dart';
+import 'package:NetCure/database/setting.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:latlng/latlng.dart';
@@ -7,6 +9,8 @@ import 'package:maps_launcher/maps_launcher.dart';
 
 class MapsPassing {
   Position pos;
+  ValueNotifier<int> forLoc = ValueNotifier(0);
+
   Future<Position> updatePos() async {
     bool serviceEnabled;
     LocationPermission permission;
@@ -31,6 +35,9 @@ class MapsPassing {
       }
     }
     pos = await Geolocator.getCurrentPosition();
+    print(pos.latitude);
+    print(pos.longitude);
+    hospital.sortRadius();
     return pos;
   }
 }
@@ -46,11 +53,29 @@ class _MPSS extends State<SmallMaps> {
   final controller = MapController(
     location: LatLng(maps.pos.latitude, maps.pos.longitude),
   );
+  String alamat = "Please select the card bellow";
+  @override
+  void initState() {
+    maps.forLoc.addListener(() {
+      setState(() {
+        alamat = hospital.hospital[maps.forLoc.value].alamat +
+            "\n" +
+            hospital.hospital[maps.forLoc.value].kelurahan +
+            ", " +
+            hospital.hospital[maps.forLoc.value].kecamatan +
+            ", " +
+            hospital.hospital[maps.forLoc.value].kota +
+            "\n" +
+            hospital.hospital[maps.forLoc.value].kecamatan;
+      });
+      _goto(hospital.hospital[maps.forLoc.value].lat,
+          hospital.hospital[maps.forLoc.value].lng);
+    });
+    super.initState();
+  }
 
-  void _gotoDefault() {
-    maps
-        .updatePos()
-        .then((v) => controller.center = LatLng(v.latitude, v.longitude));
+  void _goto(double lat, double long) {
+    controller.center = LatLng(lat, long);
   }
 
   void _zoomIn() {
@@ -86,6 +111,28 @@ class _MPSS extends State<SmallMaps> {
             Center(
               child: Icon(Icons.close, color: Colors.red),
             ),
+            Container(
+              width: setting.screenSize.width,
+              padding: EdgeInsets.all(10),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: Container(
+                  padding: EdgeInsets.all(10),
+                  color: Colors.black26,
+                  child: Text(
+                    alamat,
+                    overflow: TextOverflow.fade,
+                    maxLines: 4,
+                    softWrap: true,
+                    textAlign: TextAlign.justify,
+                    style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w500),
+                  ),
+                ),
+              ),
+            )
           ],
         ),
         floatingActionButton:
@@ -115,7 +162,8 @@ class _MPSS extends State<SmallMaps> {
           FloatingActionButton(
             heroTag: null,
             onPressed: () {
-              MapsLauncher.launchCoordinates(37.4220041, -122.0862462);
+              MapsLauncher.launchCoordinates(
+                  controller.center.latitude, controller.center.longitude);
             },
             tooltip: 'Open in maps',
             child: Icon(Icons.exit_to_app_rounded),

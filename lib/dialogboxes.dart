@@ -115,6 +115,7 @@ void ackAlert(var context, String title, String msg) {
   );
 }
 
+ValueNotifier<int> tempNewsCount = ValueNotifier(5);
 ValueNotifier<double> ratioMax = ValueNotifier(0.8);
 ValueNotifier<double> ratioMin = ValueNotifier(0.3);
 
@@ -143,6 +144,33 @@ class _SDS extends State<SDSlider> {
             child: Text(ratioMin.value.toStringAsPrecision(2) +
                 "-" +
                 ratioMax.value.toStringAsPrecision(2)))
+      ],
+    );
+  }
+}
+
+class ASlider extends StatefulWidget {
+  _ASDS createState() => _ASDS();
+}
+
+class _ASDS extends State<ASlider> {
+  @override
+  Widget build(BuildContext context) {
+    return SimpleDialog(
+      title: Text("CureBar Ratio"),
+      children: [
+        Slider(
+          divisions: 15,
+          max: 15,
+          label: "${tempNewsCount.value}",
+          value: tempNewsCount.value.toDouble(),
+          onChanged: (val) {
+            setState(() {
+              tempNewsCount.value = val.round();
+            });
+          },
+        ),
+        Center(child: Text(tempNewsCount.value.toString()))
       ],
     );
   }

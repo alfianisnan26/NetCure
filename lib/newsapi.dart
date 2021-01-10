@@ -242,8 +242,10 @@ class _NewsCards extends State<NewsCards> {
     foo = checkNews(NewsGet.fromJson(jsonDecode(resp.body)));
     print('Getting Data ONLINE SUCCESS from ${setting.newsLocale.link}');
     forReturn = generateNews(foo);
-    if (forReturn.realTotal == 0) {
-      return NewsGet(false);
+    if (forReturn.realTotal <= 0 || !forReturn.status) {
+      print("Failed");
+      failedity = true;
+      return NewsGet(false, null);
     } else {
       return forReturn;
     }
@@ -297,6 +299,8 @@ class _NewsCards extends State<NewsCards> {
         ]));
   }
 
+  bool failedity = false;
+
   Future<NewsGet> newsList;
 
   @override
@@ -310,7 +314,9 @@ class _NewsCards extends State<NewsCards> {
     return FutureBuilder<NewsGet>(
         future: newsList,
         builder: (BuildContext context, ss) {
-          if (ss.connectionState == ConnectionState.done && ss.hasData) {
+          if (ss.connectionState == ConnectionState.done &&
+              ss.hasData &&
+              !failedity) {
             if (!hasDataApi && ss.data.status && ss.hasData) {
               hasDataApi = true;
             }
@@ -331,7 +337,7 @@ class _NewsCards extends State<NewsCards> {
                         height: MediaQuery.of(context).size.height * 0.30,
                         width: MediaQuery.of(context).size.width,
                         child: Item(
-                          state: (ss.hasError) ? true : false,
+                          state: (failedity) ? true : false,
                         ),
                       )
                     ]),
