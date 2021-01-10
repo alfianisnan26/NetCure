@@ -232,6 +232,7 @@ class _NewsCards extends State<NewsCards> {
 
   Future<NewsGet> loadNews() async {
     NewsGet foo, forReturn = NewsGet(false, []);
+    print("API NEWS LINK : ${setting.newsLocale.link}");
     final http.Response resp = await http.get(setting.newsLocale.link);
     if (resp.statusCode != 200) {
       print(

@@ -114,3 +114,36 @@ void ackAlert(var context, String title, String msg) {
     },
   );
 }
+
+ValueNotifier<double> ratioMax = ValueNotifier(0.8);
+ValueNotifier<double> ratioMin = ValueNotifier(0.3);
+
+class SDSlider extends StatefulWidget {
+  _SDS createState() => _SDS();
+}
+
+class _SDS extends State<SDSlider> {
+  @override
+  Widget build(BuildContext context) {
+    return SimpleDialog(
+      title: Text("CureBar Ratio"),
+      children: [
+        RangeSlider(
+          labels: RangeLabels("${ratioMin.value.toStringAsPrecision(2)}",
+              "${ratioMax.value.toStringAsPrecision(2)}"),
+          values: RangeValues(ratioMin.value, ratioMax.value),
+          onChanged: (val) {
+            setState(() {
+              ratioMin.value = val.start;
+              ratioMax.value = val.end;
+            });
+          },
+        ),
+        Center(
+            child: Text(ratioMin.value.toStringAsPrecision(2) +
+                "-" +
+                ratioMax.value.toStringAsPrecision(2)))
+      ],
+    );
+  }
+}

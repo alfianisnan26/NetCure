@@ -1,4 +1,6 @@
 import 'dart:ui';
+import 'package:NetCure/emergency/maps.dart' as maps;
+import 'package:geolocator/geolocator.dart' show Position;
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
@@ -6,6 +8,7 @@ import 'newsapi.dart';
 import 'database/setting.dart';
 import 'dialogboxes.dart' as dialogBox;
 import 'package:NetCure/database/db.dart' as db;
+import 'package:NetCure/debug.dart' as debug;
 
 BuildContext currentContext;
 
@@ -270,7 +273,6 @@ class _TabBar extends State<GenerateTabBar>
                             child: Stack(
                           children: [
                             Container(
-                              color: Colors.red,
                               height: (setting.screenSize.height *
                                           setting.ratioDrawerMaxHeightGet() -
                                       40) -
@@ -278,7 +280,21 @@ class _TabBar extends State<GenerateTabBar>
                                           setting.ratioDrawerMinHeightGet() -
                                       40) -
                                   0.5,
-                              //child: SfMaps(),
+                              child: FutureBuilder(
+                                future: maps.maps.updatePos(),
+                                builder: (BuildContext context,
+                                    AsyncSnapshot<Position> ss) {
+                                  if (ss.hasData) {
+                                    return maps.SmallMaps();
+                                  } else if (ss.hasError) {
+                                    return Center(
+                                        child: Text("Sorry, cannot load maps"));
+                                  } else {
+                                    return Center(
+                                        child: CircularProgressIndicator());
+                                  }
+                                },
+                              ),
                             ),
                             Padding(
                                 padding: EdgeInsets.only(top: widget.ecp),
@@ -400,14 +416,18 @@ class NavDrawer extends StatelessWidget {
                 color: Colors.green,
                 image: DecorationImage(
                     fit: BoxFit.cover,
-                    image: NetworkImage(
-                        'https://cdn.mos.cms.futurecdn.net/YLMh9EJRPhmht9GWNhiN7G-970-80.jpg.webp'))),
+                    image: (db.profile.data.personal.myPhoto == null)
+                        ? AssetImage("assets/images/pillsBW.jpg")
+                        : MemoryImage(db.profile.data.personal.myPhoto))),
           ),
           ListTile(
             leading: Icon(Icons.verified_user),
             title:
                 Text('PROFILE', style: TextStyle(fontWeight: FontWeight.bold)),
-            onTap: () => {Navigator.of(context).pop()},
+            onTap: () => {
+              Navigator.of(context).pop(),
+              Navigator.pushNamed(context, '/Dashboard/Profile')
+            },
           ),
           ListTile(
             leading: Icon(Icons.settings),
@@ -425,11 +445,22 @@ class NavDrawer extends StatelessWidget {
             onTap: () => {Navigator.of(context).pop()},
           ),
           ListTile(
+              leading: Icon(Icons.help),
+              title:
+                  Text('HELP', style: TextStyle(fontWeight: FontWeight.bold)),
+              onTap: () => debug.onlyForDebug()
+              //Navigator.of(context).pop()
+              ),
+          ListTile(
               leading: Icon(Icons.exit_to_app),
               title:
                   Text('LOGOUT', style: TextStyle(fontWeight: FontWeight.bold)),
-              onTap: () => Navigator.pushNamedAndRemoveUntil(
-                  context, '/', ModalRoute.withName('/'))),
+              onTap: () async {
+                setting.thisTrue = false;
+                if (await setting.deleteSession())
+                  Navigator.pushNamedAndRemoveUntil(
+                      context, '/', ModalRoute.withName('/'));
+              }),
         ],
       ),
     );
@@ -476,6 +507,7 @@ class _Dashboard extends State<Dashboard> with SingleTickerProviderStateMixin {
             child: NavDrawer()),
         body: SafeArea(
             child: SlidingUpPanel(
+                // isDraggable: false,
                 minHeight: (setting.screenSize.height *
                     setting.ratioDrawerMinHeightGet()),
                 maxHeight: (setting.screenSize.height *
@@ -487,39 +519,34 @@ class _Dashboard extends State<Dashboard> with SingleTickerProviderStateMixin {
                 },
                 onPanelClosed: () {
                   slideBar.close();
-                  print('isClosed');
                 },
                 onPanelOpened: () {
                   slideBar.open();
-                  print('isOpen');
                 },
                 parallaxEnabled: true,
                 backdropEnabled: true,
                 panel: slideBar.value,
                 body: Stack(children: [
-                  Hero(
-                    tag: 'banner',
-                    child: Container(
-                        height: setting.screenSize.height,
-                        width: setting.screenSize.width,
-                        alignment: Alignment.topCenter,
-                        padding: EdgeInsets.all(10),
-                        child: Stack(
-                          children: [
-                            Container(
-                                padding: EdgeInsets.fromLTRB(150, 0, 0, 0),
-                                child: Image.asset(
-                                  "assets/images/pills.png",
-                                )),
-                            Container(
-                                padding: EdgeInsets.fromLTRB(0, 50, 0, 0),
-                                child: Image.asset(
-                                  "assets/images/banner.png",
-                                  height: 70,
-                                ))
-                          ],
-                        )),
-                  ),
+                  Container(
+                      height: setting.screenSize.height,
+                      width: setting.screenSize.width,
+                      alignment: Alignment.topCenter,
+                      padding: EdgeInsets.all(10),
+                      child: Stack(
+                        children: [
+                          Container(
+                              padding: EdgeInsets.fromLTRB(150, 0, 0, 0),
+                              child: Image.asset(
+                                "assets/images/pills.png",
+                              )),
+                          Container(
+                              padding: EdgeInsets.fromLTRB(0, 50, 0, 0),
+                              child: Image.asset(
+                                "assets/images/banner.png",
+                                height: 70,
+                              ))
+                        ],
+                      )),
                   NewsCards(),
                   slideBar.blurr
                 ]))));

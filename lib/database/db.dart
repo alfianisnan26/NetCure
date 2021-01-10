@@ -1,9 +1,15 @@
 import 'dart:async';
+import 'dart:io';
+import 'dart:typed_data';
+import 'package:NetCure/database/setting.dart';
 import 'package:encrypt/encrypt.dart' as cry;
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:crypto/crypto.dart' as crypto;
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 class ProfileKey {
   final String email;
@@ -53,6 +59,36 @@ class ProfileKey {
   }
 }
 
+class PersonalData {
+  final picker = ImagePicker();
+  Uint8List myPhoto;
+  String base64 = "";
+
+  Uint8List get userPhoto {
+    return myPhoto = base64Decode(base64);
+  }
+
+  Future<bool> updatePhoto() async {
+    PickedFile ret = await picker.getImage(source: ImageSource.gallery);
+    if (ret != null) {
+      final File photos = File(ret.path);
+      myPhoto = photos.readAsBytesSync();
+      base64 = base64Encode(myPhoto);
+      return true;
+    } else
+      return false;
+  }
+
+  String stringify() {
+    return "{\"photo\":\"$base64\"}";
+  }
+
+  PersonalData({this.base64 = ""});
+  factory PersonalData.fromJson(dynamic json) {
+    return PersonalData(base64: json['base64']);
+  }
+}
+
 class ProfileData {
   int age;
   String hints;
@@ -60,8 +96,11 @@ class ProfileData {
   String phone;
   String shaPass;
   String email;
+  String personalString;
+  PersonalData personal = PersonalData();
 
-  ProfileData(this.age, this.hints, this.name, this.phone, this.shaPass);
+  ProfileData(this.age, this.hints, this.name, this.phone, this.shaPass,
+      this.personalString);
 
   factory ProfileData.fromJson(dynamic json) {
     return ProfileData(
@@ -69,7 +108,8 @@ class ProfileData {
         json['hints'] as String,
         json['name'] as String,
         json['phone'] as String,
-        json['sha_pass'] as String);
+        json['sha_pass'] as String,
+        json['personal'] as String);
   }
 }
 
@@ -100,6 +140,11 @@ class ProfileDB {
     return true;
   }
 
+  Future<bool> updatePersonal() async {
+    return write("${key.keyEmail}/personal.json",
+        "\"" + key.enc(data.personal.stringify()) + "\"");
+  }
+
   Future<int> getLastOnline({String onEmail}) async {
     final resp = await this
         .read(encMD5((onEmail == null) ? data.email : onEmail) + "/age.json");
@@ -119,16 +164,35 @@ class ProfileDB {
     }
   }
 
+  Future<bool> saveSetting(Setting sett) async {
+    return await write(
+        "${key.keyEmail}/setting.json", "\"${sett.toJson().toString()}\"");
+  }
+
+  Future<Setting> getSetting() async {
+    String resp = await read("${key.keyEmail}/setting.json");
+    Setting buff = Setting.fromJson(
+        jsonDecode(key.dec(resp.substring(1, resp.length - 1))));
+    print("Setting Decode Success");
+    print("Save Setting : " + (await buff.saveSetting()).toString());
+    print("Save Setting Success");
+    return buff;
+  }
+
   Future<bool> generate(String name, String phone, String email, String pass,
       String hints) async {
     print("Generating....");
     ProfileKey genKey = ProfileKey(email, pass: pass);
-
+    Setting def = setting;
+    String personalString = "{\"base64\":null}";
+    print(def.toJson().toString());
     String body = "{\"sha_pass\":\"${genKey.passHash}\"," +
         "\"name\":\"${genKey.enc(name)}\"," +
         "\"phone\":\"${genKey.enc(phone, keys: genKey.keyEmail)}\"," +
         "\"age\":${DateTime.now().millisecondsSinceEpoch}," +
-        "\"hints\":\"${genKey.enc(hints, keys: genKey.keyEmail)}\"}";
+        "\"hints\":\"${genKey.enc(hints, keys: genKey.keyEmail)}\"," +
+        "\"personal\":\"${genKey.enc(personalString)}\"," +
+        "\"setting\":\"${genKey.enc(def.toJson().toString())}\"}";
     print(body);
     if (await write("${genKey.keyEmail}.json", body)) return true;
     return false;
@@ -146,6 +210,10 @@ class ProfileDB {
       data.phone = myKey.dec(data.phone, keys: myKey.keyEmail);
       data.hints = myKey.dec(data.hints, keys: myKey.keyEmail);
       data.name = myKey.dec(data.name);
+      data.personal =
+          PersonalData.fromJson(jsonDecode(myKey.dec(data.personalString)));
+      print("${data.personal.base64}");
+      key = myKey;
       return true;
     }
     return false;
@@ -181,6 +249,7 @@ class ProfileDB {
         return 2;
       }
     }
+    return 5;
   }
 
   Future<bool> checkMail({String onEmail}) async {
@@ -195,3 +264,118 @@ class ProfileDB {
 }
 
 ProfileDB profile = ProfileDB();
+
+class MyProfile extends StatefulWidget {
+  @override
+  _MP createState() => _MP();
+}
+
+class _MP extends State<MyProfile> {
+  final GlobalKey<ScaffoldState> scaffoldKey = new GlobalKey<ScaffoldState>();
+  void showSnackBar(String title) {
+    final snackbar = SnackBar(
+      content: Text(
+        title,
+        textAlign: TextAlign.center,
+        style: TextStyle(fontSize: 15),
+      ),
+    );
+    scaffoldKey.currentState.showSnackBar(snackbar);
+  }
+
+  Widget menuProfile(String title, Widget child) {
+    return Container(
+        padding: EdgeInsets.symmetric(horizontal: 10),
+        decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey.withOpacity(0.1), width: 1)),
+        height: 70,
+        child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [Text(title), child]));
+  }
+
+  Widget menuSeparator(String text) {
+    return Container(
+        padding: EdgeInsets.symmetric(horizontal: 10),
+        decoration: BoxDecoration(color: Colors.grey.withOpacity(0.1)),
+        width: setting.screenSize.width,
+        height: 15,
+        child: Align(
+            alignment: Alignment.centerLeft,
+            child: Text(text,
+                style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 10,
+                    color: Theme.of(context).primaryColor))));
+  }
+
+  bool loading = false;
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        key: scaffoldKey,
+        appBar: AppBar(
+          title: Text("My Profile"),
+        ),
+        body: Builder(
+          builder: (context) {
+            return SingleChildScrollView(
+              child: Stack(children: [
+                Column(
+                  children: [
+                    Container(
+                        width: setting.screenSize.width,
+                        height: setting.screenSize.height * 0.3,
+                        color: Colors.grey,
+                        child: (profile.data.personal.myPhoto == null)
+                            ? Image.asset("assets/images/pillsBW.jpg",
+                                fit: BoxFit.cover)
+                            : Image.memory(
+                                profile.data.personal.myPhoto,
+                                fit: BoxFit.cover,
+                              )),
+                  ],
+                ),
+                Padding(
+                    padding: EdgeInsets.only(
+                        top: setting.screenSize.height * 0.3 - 25,
+                        left: setting.screenSize.width * 0.80),
+                    child: FloatingActionButton(
+                      backgroundColor: (loading) ? Colors.grey : null,
+                      heroTag: null,
+                      onPressed: (loading)
+                          ? null
+                          : () async {
+                              if (await profile.data.personal.updatePhoto()) {
+                                print("Photo Updated");
+                                setState(() {
+                                  loading = true;
+                                });
+                                if (await profile.updatePersonal()) {
+                                  print("Photo Saved to Online");
+                                  showSnackBar(
+                                      "Photo saved to online database");
+                                } else {
+                                  print("Cannot Save to online");
+                                  showSnackBar("Error saving photo");
+                                }
+                                setState(() {
+                                  loading = false;
+                                });
+                              }
+                            },
+                      tooltip: 'Pick Image',
+                      child: (loading)
+                          ? Padding(
+                              padding: EdgeInsets.all(3),
+                              child: CircularProgressIndicator())
+                          : Icon(Icons.add_a_photo),
+                    )),
+              ]),
+            );
+          },
+        ));
+  }
+}
+
+test() {}

@@ -2,9 +2,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:latlng/latlng.dart';
 import 'package:map/map.dart';
-import 'package:location/location.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:permission_handler/permission_handler.dart';
+import 'package:maps_launcher/maps_launcher.dart';
 
 class MapsPassing {
   Position pos;
@@ -38,12 +37,12 @@ class MapsPassing {
 
 MapsPassing maps = MapsPassing();
 
-class Maps extends StatefulWidget {
+class SmallMaps extends StatefulWidget {
   @override
-  _MPS createState() => _MPS();
+  _MPSS createState() => _MPSS();
 }
 
-class _MPS extends State<Maps> {
+class _MPSS extends State<SmallMaps> {
   final controller = MapController(
     location: LatLng(maps.pos.latitude, maps.pos.longitude),
   );
@@ -54,31 +53,14 @@ class _MPS extends State<Maps> {
         .then((v) => controller.center = LatLng(v.latitude, v.longitude));
   }
 
-  void _onDoubleTap() {
-    controller.zoom += 0.5;
+  void _zoomIn() {
+    controller.zoom += 0.25;
+    print(controller.zoom);
   }
 
-  Offset _dragStart;
-  double _scaleStart = 1.0;
-  void _onScaleStart(ScaleStartDetails details) {
-    _dragStart = details.focalPoint;
-    _scaleStart = 1.0;
-  }
-
-  void _onScaleUpdate(ScaleUpdateDetails details) {
-    final scaleDiff = details.scale - _scaleStart;
-    _scaleStart = details.scale;
-
-    if (scaleDiff > 0) {
-      controller.zoom += 0.02;
-    } else if (scaleDiff < 0) {
-      controller.zoom -= 0.02;
-    } else {
-      final now = details.focalPoint;
-      final diff = now - _dragStart;
-      _dragStart = now;
-      controller.drag(diff.dx, diff.dy);
-    }
+  void _zoomOut() {
+    controller.zoom -= 0.25;
+    print(controller.zoom);
   }
 
   @override
@@ -87,18 +69,7 @@ class _MPS extends State<Maps> {
     //controller.tileSize = 256 / devicePixelRatio;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Healthcare Maps'),
-      ),
-      body: GestureDetector(
-        onDoubleTap: _onDoubleTap,
-        onScaleStart: _onScaleStart,
-        onScaleUpdate: _onScaleUpdate,
-        onScaleEnd: (details) {
-          print(
-              "Location: ${controller.center.latitude}, ${controller.center.longitude}");
-        },
-        child: Stack(
+        body: Stack(
           children: [
             Map(
               controller: controller,
@@ -117,12 +88,38 @@ class _MPS extends State<Maps> {
             ),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _gotoDefault,
-        tooltip: 'My Location',
-        child: Icon(Icons.my_location),
-      ),
-    );
+        floatingActionButton:
+            Column(mainAxisAlignment: MainAxisAlignment.end, children: [
+          FloatingActionButton(
+            heroTag: null,
+            onPressed: () {
+              _zoomOut();
+            },
+            tooltip: 'Zoom Out',
+            child: Icon(Icons.zoom_out),
+          ),
+          SizedBox(
+            height: 5,
+          ),
+          FloatingActionButton(
+            heroTag: null,
+            onPressed: () {
+              _zoomIn();
+            },
+            tooltip: 'Zoom In',
+            child: Icon(Icons.zoom_in),
+          ),
+          SizedBox(
+            height: 5,
+          ),
+          FloatingActionButton(
+            heroTag: null,
+            onPressed: () {
+              MapsLauncher.launchCoordinates(37.4220041, -122.0862462);
+            },
+            tooltip: 'Open in maps',
+            child: Icon(Icons.exit_to_app_rounded),
+          ),
+        ]));
   }
 }

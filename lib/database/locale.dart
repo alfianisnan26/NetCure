@@ -20,7 +20,6 @@ class NewsLocale {
     'au',
     'be',
     'bg',
-    'br',
     'ca',
     'ch',
     'cn',
@@ -130,6 +129,7 @@ class NewsLocale {
   }
 
   String get link {
+    print("USED : ${this.used}");
     if (this.used == 0)
       return "${this._links}?category=health&apiKey=${this._apikey}";
     else

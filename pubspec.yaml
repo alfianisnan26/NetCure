@@ -45,8 +45,10 @@ dependencies:
   encrypt: ^4.1.0
   map: ^0.2.0+1
   latlng: any
-  location: ^3.0.1
   permission_handler: ^4.4.0+hotfix.2
+  maps_launcher: ^1.2.2+2
+  csv: ^4.1.0
+  image_picker: ^0.6.7+21
 
 dev_dependencies:
   change_app_package_name: ^0.1.2
@@ -61,3 +63,4 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/
+    - assets/database/

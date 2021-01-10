@@ -7,6 +7,7 @@ import 'database/setting.dart';
 import 'package:NetCure/database/db.dart' as db;
 import 'package:NetCure/login/forgotpass.dart';
 import 'package:NetCure/emergency/maps.dart' as mp;
+import 'package:NetCure/database/hospital.dart' as hp;
 
 void main() {
   runApp(OpenClass());
@@ -16,21 +17,9 @@ class OpenClass extends StatefulWidget {
   _OpenClass createState() => _OpenClass();
 }
 
+MyTheme themeInit = MyTheme();
+
 class _OpenClass extends State<OpenClass> {
-  initialize() async {
-    //await Config.initSetting();
-    print('Load Setting Complete');
-    setting.theme.addListener(() {
-      setState(() {});
-    });
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    initialize();
-  }
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -38,19 +27,34 @@ class _OpenClass extends State<OpenClass> {
       initialRoute: '/',
       routes: {
         '/': (context) => NetCure(),
-        '/Login': (context) //=> NetCureLogin(),
-            =>
-            mp.Maps(),
+        '/Login': (context) => NetCureLogin(),
+        //=>
+        // mp.Maps(),
         '/RegistrationPage': (context) => RegistrationPage(),
         '/Dashboard': (context) => dashboard.Dashboard(),
         '/Dashboard/Settings': (context) => SettingScreen(),
+        '/Dashboard/Profile': (context) => db.MyProfile(),
         '/Login/Forgot': (context) => ForgotPassword()
       },
-      themeMode: setting.theme.currentTheme(),
-      theme: setting.theme.get(false),
-      darkTheme: setting.theme.get(true),
+      themeMode: themeInit.currentTheme(),
+      theme: themeInit.get(false),
+      darkTheme: themeInit.get(true),
     );
   }
+}
+
+Future<void> initializeSetting(
+    BuildContext context, String email, String pass) async {
+  setting = await db.profile.getSetting();
+  setting.theme = themeInit;
+  setting.screenSize = MediaQuery.of(context).size;
+  setting.email = email;
+  setting.pass = pass;
+  setting.saveSetting();
+  print('Setting Found this true value ${setting.thisTrue}');
+  print('Auto Login Account');
+  mp.maps.updatePos().then((value) => Navigator.pushNamedAndRemoveUntil(
+      context, "/Dashboard", (route) => false));
 }
 
 class NetCure extends StatefulWidget {
@@ -59,43 +63,34 @@ class NetCure extends StatefulWidget {
 }
 
 class _State extends State<NetCure> {
-  route() {
-    if (setting.thisTrue)
-      Navigator.pushNamed(context, '/Dashboard');
-    else
-      mp.maps
-          .updatePos()
-          .then((value) => Navigator.pushNamed(context, '/Login'));
-  }
-
-  startTime() async {
-    var duration = new Duration(seconds: 3);
-    return new Timer(duration, route);
-  }
-
   void initialize() async {
+    themeInit.addListener(() {
+      setState(() {});
+    });
+    hp.hospital.loadHospital();
+    print('Load Setting Complete');
     WidgetsFlutterBinding.ensureInitialized();
-    Setting open = await setting.loadSetting();
-    if (open != null) {
-      setting = open;
-      print('Setting Found this true value ${setting.theme.darkMode}');
-      if (setting.thisTrue) {
-        print('Auto Login Account');
-        setting.theme.switchTheme(setting.theme.darkMode);
+    Setting newSet = await setting.loadSetting();
+    if (newSet != null && newSet.thisTrue) {
+      int resp = await db.profile.login(newSet.email, newSet.pass);
+      print("Login Auto Resp : " + resp.toString());
+      if (resp == 0) {
+        await initializeSetting(context, newSet.email, newSet.pass);
+        return;
       }
     }
+    Navigator.pushNamedAndRemoveUntil(context, "/Login", (route) => false);
+    return;
   }
 
   @override
   void initState() {
-    startTime();
     initialize();
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
-    setting.screenSize = MediaQuery.of(context).size;
     return Scaffold(
       body: Container(
           alignment: Alignment.center,
@@ -175,27 +170,24 @@ class _Login extends State<NetCureLogin> {
                     SizedBox(
                       height: 5,
                     ),
-                    Hero(
-                      tag: 'banner',
-                      child: Container(
-                          alignment: Alignment.center,
-                          padding: EdgeInsets.all(10),
-                          child: Stack(
-                            children: [
-                              Container(
-                                  padding: EdgeInsets.fromLTRB(150, 0, 0, 0),
-                                  child: Image.asset(
-                                    "assets/images/pills.png",
-                                  )),
-                              Container(
-                                  padding: EdgeInsets.fromLTRB(0, 50, 0, 0),
-                                  child: Image.asset(
-                                    "assets/images/banner.png",
-                                    height: 70,
-                                  ))
-                            ],
-                          )),
-                    ),
+                    Container(
+                        alignment: Alignment.center,
+                        padding: EdgeInsets.all(10),
+                        child: Stack(
+                          children: [
+                            Container(
+                                padding: EdgeInsets.fromLTRB(150, 0, 0, 0),
+                                child: Image.asset(
+                                  "assets/images/pills.png",
+                                )),
+                            Container(
+                                padding: EdgeInsets.fromLTRB(0, 50, 0, 0),
+                                child: Image.asset(
+                                  "assets/images/banner.png",
+                                  height: 70,
+                                ))
+                          ],
+                        )),
                     SizedBox(height: 20),
                     Container(
                         child: Column(children: [
@@ -353,15 +345,17 @@ class _Login extends State<NetCureLogin> {
                                                 showSnackBar(
                                                     "Account is expired, please re-register");
                                                 break;
-                                              case 0:
-                                                setState(() {
-                                                  logIn = false;
-                                                });
-                                                Navigator.of(context)
-                                                    .pushNamedAndRemoveUntil(
-                                                        '/Dashboard',
-                                                        (route) => false);
+                                              case 5:
+                                                showSnackBar("Unknown Error");
                                                 break;
+                                              case 0:
+                                                {
+                                                  await initializeSetting(
+                                                      context,
+                                                      emailController.text,
+                                                      passwordController.text);
+                                                  break;
+                                                }
                                               default:
                                                 {
                                                   showSnackBar(

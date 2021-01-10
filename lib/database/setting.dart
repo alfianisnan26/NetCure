@@ -1,10 +1,13 @@
 import 'dart:convert';
+import 'dart:ffi';
 import 'dart:io';
+import 'package:NetCure/dialogboxes.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:path_provider/path_provider.dart';
 import 'locale.dart';
 import 'package:searchable_dropdown/searchable_dropdown.dart';
+import 'package:NetCure/database/db.dart' as db;
 
 class SettingScreen extends StatefulWidget {
   _SettingScreen createState() => _SettingScreen();
@@ -18,10 +21,27 @@ class _SettingScreen extends State<SettingScreen> {
   @override
   void initState() {
     super.initState();
+    print("Init State");
     _tempDarkMode = setting.theme.darkMode ??= false;
     _tempnewsLocale = setting.newsLocale.used ??= 0;
+    ratioMax.value = setting.ratioDrawerMaxHeightGet();
+    ratioMin.value = setting.ratioDrawerMinHeightGet();
+    ratioMax.addListener(() {
+      setState(() {});
+    });
+    ratioMin.addListener(() {
+      setState(() {});
+    });
     print(_tempnewsLocale);
   }
+  /*
+  @override
+  void dispose() {
+    super.dispose();
+    ratioMax.removeListener(() {});
+    ratioMin.removeListener(() {});
+  }
+  */
 
   Future<bool> saveSetting() async {
     if (await Setting(
@@ -29,6 +49,10 @@ class _SettingScreen extends State<SettingScreen> {
             drawerRow: setting.drawerRow,
             autoPlay: setting.autoPlay,
             autoPlayTime: setting.autoPlayTime,
+            ratioDrawerMaxHeight: ratioMax.value,
+            ratioDrawerMinHeight: ratioMin.value,
+            email: setting.email,
+            pass: setting.pass,
             theme: MyTheme(darkMode: setting.theme.darkMode),
             newsLocale: NewsLocale(
                 updates:
@@ -128,13 +152,23 @@ class _SettingScreen extends State<SettingScreen> {
                   Switch(
                     value: setting.theme.darkMode,
                     onChanged: (val) {
-                      setting.theme.switchTheme(val);
+                      setState(() => setting.theme.switchTheme(val));
                       print(
                           'Trigger Switch $_tempDarkMode and ${setting.theme.darkMode}');
                     },
                   )),
-              menuSetting('Maximum CureBar Ratio', Text('Slider')),
-              menuSetting('Minimum CureBar Ratio', Text('Slider')),
+              menuSetting(
+                  'CureBar Ratio',
+                  MaterialButton(
+                      color: Colors.grey.withOpacity(0.5),
+                      child: Text(ratioMin.value.toStringAsPrecision(2) +
+                          "-" +
+                          ratioMax.value.toStringAsPrecision(2)),
+                      onPressed: () => showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return SDSlider();
+                          }))),
               menuSeparator('NEWS UPDATE'),
               menuSetting('News Count', Text('Slider')),
               menuSetting('Update Schedule', Text('DropDown')),
@@ -211,6 +245,11 @@ class LocalFiles {
   String content;
   String dir;
   LocalFiles({@required this.dir, this.content});
+  Future<bool> delete() async {
+    final String path = (await getApplicationDocumentsDirectory()).path;
+    await File('$path/${this.dir}').delete();
+    return true;
+  }
 
   Future<bool> writeLocalFile() async {
     final String path = (await getApplicationDocumentsDirectory()).path;
@@ -246,6 +285,8 @@ class Setting {
   double ratioDrawerMaxHeight, ratioDrawerMinHeight;
   bool thisTrue;
   bool loggedIn;
+  String email;
+  String pass;
 
   Setting(
       {this.maximumNewsCount = 5,
@@ -254,25 +295,37 @@ class Setting {
       this.autoPlayTime = 5,
       this.theme,
       this.newsLocale,
-      this.thisTrue = false});
+      this.thisTrue = false,
+      this.ratioDrawerMaxHeight = 0.8,
+      this.ratioDrawerMinHeight = 0.2,
+      this.email,
+      this.pass});
 
   Setting.fromJson(Map<String, dynamic> json)
-      : this.maximumNewsCount = json['MaximumNewsCount'],
+      : this.maximumNewsCount = json['maximumNewsCount'],
+        this.ratioDrawerMaxHeight = json['rdmaxh'],
+        this.ratioDrawerMinHeight = json['rdminh'],
         this.drawerRow = json['drawerRow'],
         this.autoPlay = json['autoPlay'],
         this.autoPlayTime = json['autoPlayTime'],
-        this.theme = MyTheme.fromJson(json['MysTheme']),
+        this.theme = MyTheme.fromJson(json['MyTheme']),
         this.newsLocale = NewsLocale.fromJson(json['NewsLocale']),
-        this.thisTrue = json['ThisTrue'];
+        this.thisTrue = json['ThisTrue'],
+        this.email = json['mail'],
+        this.pass = json['pass'];
 
   Map<String, dynamic> toJson() => {
         "\"maximumNewsCount\"": this.maximumNewsCount,
+        "\"rdmaxh\"": this.ratioDrawerMaxHeight,
+        "\"rdminh\"": this.ratioDrawerMinHeight,
         "\"drawerRow\"": this.drawerRow,
         "\"autoPlay\"": this.autoPlay,
         "\"autoPlayTime\"": this.autoPlayTime,
         "\"MyTheme\"": this.theme.toJson(),
         "\"NewsLocale\"": this.newsLocale.toJson(),
         "\"ThisTrue\"": true,
+        "\"mail\"": "\"${this.email}\"",
+        "\"pass\"": "\"${this.pass}\""
       };
 
   Future<Setting> loadSetting() async {
@@ -284,6 +337,10 @@ class Setting {
       }
     }
     return null;
+  }
+
+  Future<bool> deleteSession() async {
+    return await config.delete();
   }
 
   Future<bool> saveSetting() async {
