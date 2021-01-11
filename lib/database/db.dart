@@ -59,11 +59,24 @@ class ProfileKey {
   }
 }
 
+class Alarms {
+  TimeOfDay alarms;
+  String name;
+  Alarms({this.alarms, this.name = ""});
+}
+
+class Routines {
+  String name;
+  List<Alarms> alarms;
+  Routines({this.name});
+}
+
 class PersonalData {
   final picker = ImagePicker();
   Uint8List myPhoto;
   DateTime dob;
   int sex;
+  List<Routines> routines = [];
   int ethnic;
   List<String> deceases;
   String base64 = "";

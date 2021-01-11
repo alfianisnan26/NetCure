@@ -1,6 +1,9 @@
+import 'package:NetCure/database/db.dart';
+import 'package:NetCure/database/setting.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:flutter_rounded_date_picker/rounded_picker.dart';
 import 'newsapi.dart' show Articles;
 import 'dashboard.dart';
 import 'dart:io';
@@ -95,6 +98,32 @@ void addRoutines(CardClass cardRoutines, var context) {
   );
 }
 
+Future<bool> dialogToDelete(var context, String msg) {
+  return showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text("Are you sure want to delete?"),
+        content: Text(msg),
+        actions: [
+          FlatButton(
+            child: Text('Cancel'),
+            onPressed: () {
+              Navigator.of(context).pop(false);
+            },
+          ),
+          FlatButton(
+            child: Text('Delete'),
+            onPressed: () {
+              Navigator.of(context).pop(true);
+            },
+          ),
+        ],
+      );
+    },
+  );
+}
+
 void ackAlert(var context, String title, String msg) {
   showDialog(
     context: context,
@@ -174,4 +203,139 @@ class _ASDS extends State<ASlider> {
       ],
     );
   }
+}
+
+class AddRoutines extends StatefulWidget {
+  _AR createState() => _AR();
+}
+
+class _AR extends State<AddRoutines> {
+  Size s;
+  Widget separator({String label = ""}) {
+    return Container(
+      color: Colors.grey.withOpacity(0.5),
+      height: 20,
+      padding: EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+      width: s.width,
+      child: Text(
+        label,
+        style: TextStyle(fontSize: 10, color: Colors.grey),
+      ),
+    );
+  }
+
+  Widget tiles(List<Widget> myChild, {Color color}) {
+    return Container(
+      height: 60,
+      color: color,
+      padding: EdgeInsets.symmetric(vertical: 2, horizontal: 10),
+      width: s.width,
+      child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: myChild),
+    );
+  }
+
+  Widget scheduler() {
+    if (myAlarms.length > 0) {
+      return Column(
+        children: List<Widget>.generate(myAlarms.length, (index) {
+          return tiles([
+            Text(myAlarms[index].name),
+            MaterialButton(
+                child: Text(myAlarms[index].alarms.toString()),
+                onLongPress: () {
+                  dialogToDelete(context, myAlarms[index].name).then((value) {
+                    if (value) {
+                      myAlarms.removeAt(index);
+                    }
+                  });
+                },
+                onPressed: () async {
+                  final TimeOfDay ouPut = await showRoundedTimePicker(
+                      context: context, initialTime: TimeOfDay.now());
+                  if (ouPut != null) {
+                    setState(() {
+                      myAlarms[index].alarms = ouPut;
+                      print("Modified");
+                    });
+                  }
+                })
+          ]);
+        }),
+      );
+    } else
+      return tiles(
+        [Text("No Alarms", style: TextStyle(color: Colors.grey))],
+      );
+  }
+
+  List<Alarms> myAlarms = [];
+
+  TextEditingController _tcTitle = TextEditingController();
+  @override
+  Widget build(BuildContext context) {
+    _tcTitle.text = "New Routines";
+    s = setting.screenSize;
+    return Dialog(
+        child: Container(
+            width: s.width,
+            child: Column(
+              children: [
+                Stack(alignment: AlignmentDirectional.center, children: [
+                  Container(
+                      width: s.width,
+                      height: s.height * 0.2,
+                      child: Image.asset(
+                        "assets/images/pillsBW.jpg",
+                        fit: BoxFit.cover,
+                        color: (setting.theme.darkMode)
+                            ? Colors.black38
+                            : Colors.white38,
+                        colorBlendMode: (setting.theme.darkMode)
+                            ? BlendMode.darken
+                            : BlendMode.lighten,
+                      )),
+                  Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 20),
+                      child: TextField(
+                        style: TextStyle(
+                            fontSize: 20, fontWeight: FontWeight.w900),
+                        textAlign: TextAlign.center,
+                        controller: _tcTitle,
+                      ))
+                ]),
+                separator(label: "SCHEDULER"),
+                tiles([
+                  Text("Add Alarm", style: TextStyle(fontSize: 18)),
+                  IconButton(
+                      icon: Icon(Icons.add),
+                      onPressed: () async {
+                        final TimeOfDay ouPut = await showRoundedTimePicker(
+                            context: context, initialTime: TimeOfDay.now());
+                        if (ouPut != null) {
+                          setState(() {
+                            myAlarms.add(Alarms(
+                                alarms: ouPut,
+                                name: "My Alarms Number : " +
+                                    myAlarms.length.toString()));
+                          });
+                          print("Added");
+                        }
+                      })
+                ], color: Colors.grey),
+                scheduler()
+              ],
+            )));
+    ;
+  }
+}
+
+Future<bool> routineAdd(BuildContext context) async {
+  return showDialog(
+      context: context,
+      builder: (context) {
+        return AddRoutines();
+      });
 }

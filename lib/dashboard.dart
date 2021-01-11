@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:NetCure/database/hospital.dart';
+import 'package:NetCure/dialogboxes.dart';
 import 'package:NetCure/emergency/maps.dart' as maps;
 import 'package:geolocator/geolocator.dart' show Position;
 import 'package:google_fonts/google_fonts.dart';
@@ -18,12 +19,20 @@ ValueNotifier<bool> updates = ValueNotifier(false);
 
 class CardItem {
   Function onTap;
+  Function onLongPress;
   var color;
   Widget smallWidget;
   Widget bigWidget;
   Widget expandedWidget;
+  bool isExpanded = true;
   CardItem(this.onTap, this.color, this.smallWidget, this.bigWidget,
-      this.expandedWidget);
+      this.expandedWidget,
+      {this.onLongPress}) {
+    if (this.expandedWidget == null)
+      isExpanded = false;
+    else
+      isExpanded = true;
+  }
 }
 
 class SmallCardExpanded extends StatefulWidget {
@@ -85,13 +94,16 @@ class _SmallCardExpanded extends State<SmallCardExpanded> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-        onTap: () {
-          if (!expanded) {
-            scrollAnimate();
-          } else {
-            widget.myCards.onTap();
-          }
-        },
+        onLongPress: widget.myCards.onLongPress,
+        onTap: (!widget.myCards.isExpanded)
+            ? widget.myCards.onTap
+            : () {
+                if (!expanded) {
+                  scrollAnimate();
+                } else {
+                  widget.myCards.onTap();
+                }
+              },
         child: AnimatedContainer(
             padding: EdgeInsets.symmetric(vertical: 2),
             width: (expanded) ? expandedWidth : width,
@@ -316,22 +328,66 @@ class _TabBar extends State<GenerateTabBar>
     updates.value = !updates.value;
   }
 
+  void addNewRoutines() async {
+    print("Get In Here");
+    print("return" + (await routineAdd(context)).toString());
+    db.profile.data.personal.routines.add(db.Routines(name: "Alfian"));
+    print(
+        "Add New Member Length : ${db.profile.data.personal.routines.length}");
+    routinesGenerator();
+  }
+
+  void routinesGenerator() {
+    cardRoutines.canBig = true;
+    List<db.Routines> myRou = db.profile.data.personal.routines;
+    int len = ((myRou.length == null) ? 0 : myRou.length) + 1;
+    cardRoutines.myCards = List<CardItem>.generate(len, (a) {
+      if (a == 0) {
+        return CardItem(
+            () => addNewRoutines(),
+            Colors.green,
+            SizedBox(
+                height: setting.screenSize.height *
+                    setting.ratioDrawerMinHeightGet(),
+                child: Icon(Icons.add)),
+            SizedBox(child: Icon(Icons.add)),
+            null);
+      } else
+        return CardItem(
+            () => ackAlert(context, "TestALertaa", "Number: $a"),
+            Colors.green,
+            SizedBox(
+                height: setting.screenSize.height *
+                    setting.ratioDrawerMinHeightGet(),
+                child: Center(child: Text("TestSmall $a"))),
+            Center(child: Text("TestBig $a")),
+            SizedBox(
+                height: setting.screenSize.height *
+                    setting.ratioDrawerMinHeightGet(),
+                child: Center(child: Text("TextExtended $a"))),
+            onLongPress: () async {
+          dialogToDelete(context, "TestDelete $a").then((value) {
+            if (value) {
+              db.profile.data.personal.routines.removeAt(a - 1);
+              routinesGenerator();
+            }
+          });
+        });
+    });
+    cardRoutines.renderCards("Routines_Cards");
+    updates.value = !updates.value;
+  }
+
   @override
   void initState() {
     super.initState();
     emergencyGenerator();
+    routinesGenerator();
     updates.addListener(() {
       setState(() {
         print("Update_SmallCard");
       });
     });
-    cardRoutines.dumpGenerate(
-        true,
-        25,
-        () => dialogBox.ackAlert(currentContext, 'Trial', 'Routines'),
-        Colors.green,
-        "Routine");
-
     cardLogs.dumpGenerate(
         true,
         30,
@@ -593,7 +649,7 @@ class NavDrawer extends StatelessWidget {
               leading: Icon(Icons.help),
               title:
                   Text('HELP', style: TextStyle(fontWeight: FontWeight.bold)),
-              onTap: () => debug.onlyForDebug()
+              onTap: () => debug.onlyForDebug(context)
               //Navigator.of(context).pop()
               ),
           ListTile(
@@ -637,7 +693,6 @@ class _Dashboard extends State<Dashboard> with SingleTickerProviderStateMixin {
   @override
   void dispose() {
     super.dispose();
-    _controller.dispose();
   }
 
   @override
